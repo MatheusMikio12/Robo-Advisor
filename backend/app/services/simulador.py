@@ -30,7 +30,18 @@ def simular_carteira(
             "saldo": round(saldo, 2)
         })
 
+    # 📊 MÉTRICAS
+    total_investido = aporte_inicial + (aporte_mensal * meses)
+    retorno_absoluto = saldo - total_investido
+    retorno_percentual = (retorno_absoluto / total_investido) * 100
+
+    cagr = (saldo / total_investido) ** (1 / anos) - 1
+
     return {
         "valor_final": round(saldo, 2),
+        "total_investido": round(total_investido, 2),
+        "retorno_absoluto": round(retorno_absoluto, 2),
+        "retorno_percentual": round(retorno_percentual, 2),
+        "cagr": round(cagr * 100, 2),  # em %
         "historico": historico
     }

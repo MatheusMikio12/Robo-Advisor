@@ -13,3 +13,7 @@ app.include_router(router)
 
 app.include_router(recomendacao_router)
 app.include_router(simulacao_router)
+
+from app.routes import planejamento
+
+app.include_router(planejamento.router)
