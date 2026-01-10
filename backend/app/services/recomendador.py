@@ -19,7 +19,12 @@ def gerar_carteira(perfil_classificado):
             "FIIs": 10
         }
     }
-    return carteiras[perfil_classificado]
+    carteira_dict = carteiras[perfil_classificado]
+    # Converter para array de objetos esperado pelo frontend
+    return [
+        {"ativo": ativo, "percentual": percentual}
+        for ativo, percentual in carteira_dict.items()
+    ]
 
 
 def explicar_recomendacao(perfil_classificado, perfil):

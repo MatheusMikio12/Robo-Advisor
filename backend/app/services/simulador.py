@@ -1,5 +1,5 @@
 def simular_carteira(
-    carteira: dict,
+    carteira: list,
     aporte_inicial: float,
     aporte_mensal: float,
     anos: int
@@ -19,7 +19,9 @@ def simular_carteira(
         saldo += aporte_mensal
 
         retorno_mensal = 0
-        for classe, percentual in carteira.items():
+        for item in carteira:
+            classe = item["ativo"]
+            percentual = item["percentual"]
             retorno_ano = retornos_anuais.get(classe, 0)
             retorno_mensal += (percentual / 100) * (retorno_ano / 12)
 
@@ -43,5 +45,8 @@ def simular_carteira(
         "retorno_absoluto": round(retorno_absoluto, 2),
         "retorno_percentual": round(retorno_percentual, 2),
         "cagr": round(cagr * 100, 2),  # em %
-        "historico": historico
+        "evolucao": [
+            {"ano": int(item["mes"] / 12), "valor": item["saldo"]}
+            for item in historico if item["mes"] % 12 == 0
+        ] or [{"ano": 0, "valor": aporte_inicial}]
     }

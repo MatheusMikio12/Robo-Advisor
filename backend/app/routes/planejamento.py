@@ -4,7 +4,7 @@ from app.services.suitability import classificar_perfil
 from app.services.recomendador import gerar_carteira
 from app.services.simulador import simular_carteira
 
-router = APIRouter(prefix="/planejamento", tags=["Planejamento"])
+router = APIRouter(prefix="/planejamento", tags=["Planejamento"], redirect_slashes=False)
 
 
 @router.post("/")
@@ -33,9 +33,16 @@ def gerar_planejamento(dados: dict):
         carteira=carteira
     )
 
-    # 5️⃣ Retornar planejamento completo
+    # 5️⃣ Retornar planejamento completo (estrutura esperada pelo frontend)
     return {
         "perfil": perfil,
-        "carteira_recomendada": carteira,
-        "simulacao": simulacao
+        "carteira": carteira,
+        "resumo": {
+            "valor_final": simulacao.get("valor_final", 0),
+            "total_investido": simulacao.get("total_investido", 0),
+            "retorno_absoluto": simulacao.get("retorno_absoluto", 0),
+            "retorno_percentual": simulacao.get("retorno_percentual", 0),
+            "cagr": simulacao.get("cagr", 0)
+        },
+        "evolucao": simulacao.get("evolucao", [])
     }
