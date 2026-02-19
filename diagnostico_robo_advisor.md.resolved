@@ -1,0 +1,389 @@
+# 🤖 Diagnóstico Completo — Robo-Advisor
+
+Análise técnica detalhada baseada na leitura de **cada arquivo** do projeto.
+
+---
+
+## 1️⃣ Diagnóstico Atual
+
+### O que o projeto já faz
+
+| Funcionalidade | Onde vive | Status |
+|---|---|---|
+| Questionário do investidor (idade, renda, patrimônio, aporte, prazo, objetivo) | [InvestorForm.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/InvestorForm.tsx) + [perfil.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py) | ✅ Funcional |
+| Classificação de perfil de risco (Conservador / Moderado / Agressivo) | [suitability.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/suitability.py) | ✅ Funcional |
+| Recomendação de carteira (Renda Fixa, ETFs, Ações, FIIs) | [recomendador.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/recomendador.py) | ✅ Funcional |
+| Simulação de crescimento patrimonial (juros compostos mensais) | [simulador.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/simulador.py) | ✅ Funcional |
+| Dashboard com gráfico de evolução (AreaChart) | [EvolutionChart.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/EvolutionChart.tsx) | ✅ Funcional |
+| Cards de carteira recomendada com ícones dinâmicos | [PortfolioCards.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/PortfolioCards.tsx) | ✅ Funcional |
+| Resumo financeiro (valor final, CAGR, retorno) | [FinancialSummary.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/FinancialSummary.tsx) | ✅ Funcional |
+| Exibição do perfil classificado | [InvestorProfile.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/InvestorProfile.tsx) | ✅ Funcional |
+
+### Pontos Fortes
+
+- **Stack moderna e bem escolhida**: React 18 + Vite + TypeScript + TailwindCSS + shadcn/ui + FastAPI + Pydantic
+- **Separação de camadas no backend**: `models/`, `routes/`, `services/` — padrão clean architecture simplificado
+- **Tipagem forte** no frontend com [types/roboAdvisor.ts](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/types/roboAdvisor.ts) e interfaces bem definidas
+- **UI componentizada** com componentes reutilizáveis e design visual com gradientes, ícones Lucide
+- **Formatação financeira brasileira** (BRL, pt-BR) corretamente implementada
+- **CORS configurado** para múltiplas origens de dev
+- **Gráficos responsivos** com Recharts (AreaChart com tooltips customizados)
+
+### Pontos Fracos / Bugs Encontrados
+
+> [!CAUTION]
+> **Bug crítico em `recomendador.py:35`**: A função [explicar_recomendacao()](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/recomendador.py#30-39) referencia `perfil.tolerancia_risco`, mas esse campo **não existe** no modelo [PerfilInvestidor](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py#3-9). Isso causa `AttributeError` em runtime.
+
+> [!WARNING]
+> **Rotas órfãs**: Os arquivos [routes/recomendacao.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/routes/recomendacao.py) e [routes/simulacao.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/routes/simulacao.py) definem routers que **nunca são registrados** em [main.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/main.py). Apenas [planejamento.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/routes/planejamento.py) está incluído. Ou seja, `/recomendacao` e `/simulacao` retornam 404.
+
+| Ponto fraco | Impacto | Severidade |
+|---|---|---|
+| [config.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/core/config.py) está **vazio** — sem variáveis de ambiente | Sem configuração centralizada | 🟡 Médio |
+| URL da API hardcoded no frontend (`http://127.0.0.1:8000`) | Impossível fazer deploy sem alterar código | 🔴 Alto |
+| Endpoint recebe `dict` genérico em vez de [PerfilInvestidor](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py#3-9) | Bypass da validação Pydantic | 🟡 Médio |
+| [requirements.txt](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/requirements.txt) sem versões fixas | Builds não reproduzíveis | 🟡 Médio |
+| Zero testes (unitários ou integração) | Sem rede de segurança para refactoring | 🔴 Alto |
+| Sem banco de dados — tudo stateless | Não persiste histórico de planejamentos | 🟡 Médio |
+| Sem autenticação/autorização | Qualquer pessoa acessa a API | 🟡 Médio |
+| Sem tratamento de erros estruturado no backend | Erros retornam stack traces em produção | 🟡 Médio |
+| O campo `objetivo` é coletado mas **nunca influencia** a classificação | Dado inútil na lógica atual | 🟠 Notável |
+| Sem logging estruturado | Difícil debugar problemas | 🟡 Médio |
+| Inconsistência de nomes: Backend retorna `"Agressivo"` mas frontend mapeia `"arrojado"` E `"agressivo"` | Pode causar fallback visual errado | 🟠 Notável |
+
+### Nível Técnico Estimado
+
+> **Intermediário-iniciante** (com bons fundamentos)
+
+Justificativa: Stack bem escolhida, separação de responsabilidades compreendida, UI bem executada. Faltam: testes, validação robusta, persistência, segurança, e configuração por ambiente.
+
+---
+
+## 2️⃣ Funcionalidades que Posso Adicionar
+
+As funcionalidades estão ordenadas pela **prioridade de implementação recomendada**.
+
+---
+
+### 🏆 1. Correção de Bugs + Validação Robusta
+**O que é**: Corrigir os bugs encontrados, registrar todas as rotas, validar inputs corretamente.
+
+**Por que agrega valor**: A aplicação não funciona corretamente nas rotas `/recomendacao` e `/simulacao`, e o campo `objetivo` é coletado sem utilidade. Corrigir isso é pré-requisito para tudo mais.
+
+**Como implementar**:
+- Registrar todos os routers em [main.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/main.py) com `app.include_router()`
+- Usar o modelo [PerfilInvestidor](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py#3-9) diretamente no endpoint `/planejamento` (em vez de `dict`)
+- Remover referência a `tolerancia_risco` em [recomendador.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/recomendador.py)
+- Incorporar `objetivo` na lógica de [suitability.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/suitability.py) (ex: "reserva" → mais conservador)
+- Popular [config.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/core/config.py) com `BaseSettings` do Pydantic para variáveis de ambiente
+- Usar variável de ambiente para a URL da API no frontend
+
+**Dificuldade**: 🟢 Baixo | **Prioridade**: 1
+
+---
+
+### 🎯 2. Sistema de Metas Financeiras
+**O que é**: Permitir que o usuário defina um valor-alvo (ex: R$ 1M) e o sistema calcule prazo necessário ou aporte mensal ideal.
+
+**Por que agrega valor**: Transforma o Robo-Advisor de "simulador passivo" para "planejador ativo". Diferencial forte para banca.
+
+**Como implementar**:
+- Novo modelo `MetaFinanceira` em `models/meta.py` (`valor_alvo`, `prazo_desejado`)
+- Novo service `planejador.py` com algoritmo de busca binária para encontrar aporte necessário
+- Novo endpoint `POST /meta` em `routes/meta.py`
+- Novo componente `GoalTracker.tsx` no frontend com barra de progresso visual
+
+**Dificuldade**: 🟡 Médio | **Prioridade**: 2
+
+---
+
+### 📊 3. Dashboard com Gráfico de Pizza da Carteira
+**O que é**: Adicionar um gráfico de pizza (PieChart) para visualização intuitiva da alocação da carteira.
+
+**Por que agrega valor**: A carteira já é exibida em cards, mas um gráfico de pizza é a representação visual canônica para alocação. Recharts já está instalado.
+
+**Como implementar**:
+- Novo componente `PortfolioPieChart.tsx` usando `PieChart` do Recharts
+- Integrar na página [Index.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/pages/Index.tsx) ao lado dos [PortfolioCards](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/PortfolioCards.tsx#34-80)
+- Usar as mesmas cores dos cards para consistência visual
+
+**Dificuldade**: 🟢 Baixo | **Prioridade**: 3
+
+---
+
+### 🔐 4. Sistema de Autenticação (JWT)
+**O que é**: Login/registro de usuários com JWT, permitindo salvar e recuperar planejamentos.
+
+**Por que agrega valor**: Pré-requisito para persistência de dados, histórico, e múltiplos cenários — transforma de ferramenta anônima para aplicação real.
+
+**Como implementar**:
+- Novo pacote `auth/` no backend com `models/user.py`, `routes/auth.py`, `services/auth_service.py`
+- Usar `python-jose` para JWT e `passlib[bcrypt]` para hash de senhas
+- SQLite + SQLAlchemy para persistir usuários (leve, sem infra externa)
+- Middleware de autenticação com `Depends()` do FastAPI
+- Frontend: tela de login, `AuthContext`, `ProtectedRoute`, token no `localStorage`
+
+**Dificuldade**: 🟡 Médio | **Prioridade**: 4
+
+---
+
+### 💾 5. Persistência com Banco de Dados (SQLite + SQLAlchemy)
+**O que é**: Salvar planejamentos, carteiras e simulações no banco de dados.
+
+**Por que agrega valor**: Permite histórico de planejamentos, comparação entre cenários, e funcionalidades que dependem de dados persistidos.
+
+**Como implementar**:
+- Nova pasta `database/` com `connection.py` e `models.py` (SQLAlchemy ORM)
+- Tabelas: `users`, `planejamentos`, `carteiras`, `simulacoes`
+- Alembic para migrations
+- CRUD services em `services/database_service.py`
+- Endpoint `GET /planejamentos/{user_id}` para listar histórico
+
+**Dificuldade**: 🟡 Médio | **Prioridade**: 5
+
+---
+
+### 📈 6. Score de Risco Sofisticado (Questionário Expandido)
+**O que é**: Expandir o sistema de suitability com mais perguntas (experiência com investimentos, reação a perdas, porcentagem da renda comprometida, nível de conhecimento).
+
+**Por que agrega valor**: O score atual usa apenas 3 variáveis. Um questionário mais completo gera classificações mais precisas e demonstra profundidade acadêmica.
+
+**Como implementar**:
+- Expandir [PerfilInvestidor](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py#3-9) com campos: `experiencia_investimentos`, `reacao_perda`, `percentual_renda_livre`, `conhecimento_financeiro`
+- Refatorar [suitability.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/suitability.py) com pesos ponderados (sistema de pontuação com 7+ dimensões)
+- Adicionar slider/radio buttons no [InvestorForm.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/InvestorForm.tsx) para novas perguntas
+- Retornar o score numérico detalhado junto com a classificação
+
+**Dificuldade**: 🟡 Médio | **Prioridade**: 6
+
+---
+
+### ⚖️ 7. Rebalanceamento de Carteira
+**O que é**: Dado um portfólio atual do usuário (ex: 80% em ações), calcular os trades necessários para alinhar à alocação recomendada.
+
+**Por que agrega valor**: Funcionalidade clássica de robo-advisors reais (Betterment, Wealthfront). Diferencial técnico significativo.
+
+**Como implementar**:
+- Novo modelo `CarteiraAtual` com posições atuais do investidor
+- Novo service `rebalanceador.py` que calcula deltas (comprar/vender)
+- Endpoint `POST /rebalancear` que compara carteira atual vs. recomendada
+- Componente `RebalanceResult.tsx` mostrando operações necessárias com setas visuais
+
+**Dificuldade**: 🟡 Médio | **Prioridade**: 7
+
+---
+
+### 🤖 8. Chatbot Financeiro (Regras + OpenAI)
+**O que é**: Assistente conversacional que responde perguntas sobre investimentos e explica as recomendações.
+
+**Por que agrega valor**: Fator "wow" para apresentação acadêmica. Demonstra integração com IA generativa.
+
+**Como implementar**:
+- **Fase 1 (sem API externa)**: Chatbot baseado em regras com respostas pré-definidas para perguntas frequentes sobre os perfis e ativos
+- **Fase 2 (com OpenAI)**: Integrar `openai` Python SDK; criar endpoint `POST /chat` que envia contexto do planejamento como system prompt + pergunta do usuário
+- Componente `ChatWidget.tsx` com drawer lateral (usando shadcn/ui `Sheet`)
+
+**Dificuldade**: 🟠 Médio-Alto | **Prioridade**: 8
+
+---
+
+### 🧠 9. Machine Learning para Recomendação (Scikit-learn)
+**O que é**: Modelo de classificação treinado em dados sintéticos para prever perfil de risco, substituindo a lógica de score manual.
+
+**Por que agrega valor**: Diferencial acadêmico forte — demonstra aplicação prática de ML em finanças. Impressiona banca avaliadora.
+
+**Como implementar**:
+- Gerar dataset sintético com 10.000+ perfis usando regras expandidas
+- Treinar `RandomForestClassifier` ou `GradientBoostingClassifier` do scikit-learn
+- Serializar modelo com `joblib` e carregar no startup da API
+- Novo service `ml_suitability.py` que substitui [suitability.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/suitability.py)
+- Comparar predições ML vs. regras manuais e exibir confiança do modelo
+
+**Dificuldade**: 🔴 Alto | **Prioridade**: 9
+
+---
+
+### 📱 10. Simulador de Cenários (Otimista / Realista / Pessimista)
+**O que é**: Simular 3 cenários com taxas de retorno diferentes (ex: -30% do esperado para pessimista).
+
+**Por que agrega valor**: Mostra maturidade financeira — retornos passados não garantem futuros. Aumenta a credibilidade.
+
+**Como implementar**:
+- Modificar [simulador.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/simulador.py) para aceitar multiplicadores de cenário (0.7, 1.0, 1.3)
+- Retornar 3 arrays de evolução na resposta
+- Novo componente `ScenarioChart.tsx` com 3 linhas sobrepostas (Recharts multi-line)
+
+**Dificuldade**: 🟢 Baixo | **Prioridade**: 3 (pode ser implementado junto ao PieChart)
+
+---
+
+## 3️⃣ Melhorias Técnicas
+
+### Estrutura de Pastas (Proposta)
+
+```diff
+  backend/
+    app/
++     __init__.py
+      main.py
+      core/
+-       config.py  (vazio)
++       config.py  (BaseSettings com env vars)
++       exceptions.py  (exceções customizadas)
++       middleware.py  (logging, error handling)
+      models/
++       __init__.py
+        perfil.py
+        simulacao.py
++       meta.py
++       user.py
+      routes/
++       __init__.py
+        planejamento.py
+        recomendacao.py  (registrar no main!)
+        simulacao.py     (registrar no main!)
++       auth.py
++       meta.py
+      services/
++       __init__.py
+        suitability.py
+        recomendador.py
+        simulador.py
++       auth_service.py
++       planejador.py
++     database/
++       connection.py
++       models.py
++       migrations/
++     tests/
++       test_suitability.py
++       test_simulador.py
++       test_recomendador.py
++       test_routes.py
+```
+
+### Padrões de Arquitetura
+
+| Melhoria | Detalhe |
+|---|---|
+| **Dependency Injection** | Usar `Depends()` do FastAPI para injetar services nos routes |
+| **Response Models** | Definir `response_model` Pydantic nos endpoints para auto-documentação Swagger |
+| **Error Handling** | Criar `HTTPException` handlers globais e exceções customizadas |
+| **Environment Config** | Usar `pydantic.BaseSettings` com `.env` file para todas as configs |
+| **API Versioning** | Prefixar rotas com `/api/v1/` para versionamento futuro |
+
+### Validação de Dados
+
+| Melhoria | Onde | Como |
+|---|---|---|
+| Usar modelo Pydantic no endpoint | `planejamento.py:11` | Trocar `dict` por [PerfilInvestidor](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py#3-9) (ou novo modelo com todos campos do form) |
+| Validar ranges | [perfil.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py) | Adicionar `Field(ge=18, le=100)` na idade, `Field(gt=0)` na renda |
+| Validar objetivo | [perfil.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/models/perfil.py) | Usar `Literal["aposentadoria", "imovel", "reserva", "crescimento"]` |
+| Frontend validation | [InvestorForm.tsx](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/frontend/src/components/InvestorForm.tsx) | Integrar `react-hook-form` + `zod` (já instalados mas não usados!) |
+
+### Segurança
+
+| Item | Status | Recomendação |
+|---|---|---|
+| CORS | ⚠️ Parcial | Mover origins para variável de ambiente; restringir em produção |
+| Input sanitization | ❌ Ausente | Pydantic resolve no backend; adicionar `zod` no frontend |
+| Rate limiting | ❌ Ausente | Adicionar `slowapi` para limitar requests por IP |
+| HTTPS | ❌ Ausente | Configurar em produção (Nginx/Caddy reverse proxy) |
+| Headers de segurança | ❌ Ausente | Adicionar helmet-like headers (CSP, X-Frame-Options) |
+
+### Escalabilidade
+
+| Item | Recomendação |
+|---|---|
+| **Docker** | Criar `Dockerfile` para backend e frontend + `docker-compose.yml` |
+| **CI/CD** | GitHub Actions com lint + test + build em todo PR |
+| **Cache** | Cachear resultados de simulação por hash dos inputs (evita recálculo) |
+| **Async** | Endpoints já podem ser `async def` pois FastAPI suporta nativamente |
+
+---
+
+## 4️⃣ Roadmap Sugerido (3 Fases)
+
+### 🚀 Fase 1: Melhorias Rápidas (1-2 semanas)
+
+**Objetivo**: Corrigir bugs, solidificar a base, adicionar quick wins visuais.
+
+| # | Tarefa | Impacto |
+|---|---|---|
+| 1 | Corrigir bug `tolerancia_risco` em [recomendador.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/services/recomendador.py) | 🔴 Crítico |
+| 2 | Registrar rotas órfãs em [main.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/main.py) | 🔴 Crítico |
+| 3 | Usar Pydantic model no endpoint (trocar `dict`) | 🟡 Qualidade |
+| 4 | Popular [config.py](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/app/core/config.py) com `BaseSettings` + `.env` | 🟡 Qualidade |
+| 5 | Usar variável de ambiente para URL da API no frontend | 🟡 Deploy |
+| 6 | Incorporar `objetivo` na lógica de suitability | 🟢 Feature |
+| 7 | Adicionar PieChart da carteira (Recharts) | 🟢 Visual |
+| 8 | Adicionar simulação de cenários (3 linhas no gráfico) | 🟢 Feature |
+| 9 | Fixar versões no [requirements.txt](file:///d:/downloads/Antigravity/repositoriso/Robo-Advisor/backend/requirements.txt) | 🟡 Qualidade |
+| 10 | Integrar `zod` + `react-hook-form` no formulário | 🟡 UX |
+
+---
+
+### 🏗️ Fase 2: Evolução Estrutural (3-4 semanas)
+
+**Objetivo**: Tornar o projeto "produção-ready" com persistência, auth, testes.
+
+| # | Tarefa | Impacto |
+|---|---|---|
+| 1 | Testes unitários para services (pytest) | 🔴 Qualidade |
+| 2 | Sistema de metas financeiras (calcular aporte ideal) | 🟢 Feature |
+| 3 | Score de risco expandido (questionário com 7+ dimensões) | 🟢 Feature |
+| 4 | SQLite + SQLAlchemy (persistência de planejamentos) | 🟡 Infraestrutura |
+| 5 | Autenticação JWT (login/registro) | 🟡 Segurança |
+| 6 | Histórico de planejamentos do usuário | 🟢 Feature |
+| 7 | Rebalanceamento de carteira | 🟢 Feature |
+| 8 | Docker + docker-compose | 🟡 Deploy |
+| 9 | Error handling global + logging (loguru) | 🟡 Qualidade |
+| 10 | API versioning (`/api/v1/`) | 🟡 Qualidade |
+
+---
+
+### 🌟 Fase 3: Diferenciais Avançados (4-6 semanas)
+
+**Objetivo**: Funcionalidades "wow" que impressionam banca avaliadora.
+
+| # | Tarefa | Impacto |
+|---|---|---|
+| 1 | ML para classificação de perfil (scikit-learn) | 🌟 Acadêmico |
+| 2 | Chatbot financeiro (regras + opcionalmente OpenAI) | 🌟 UX |
+| 3 | PDF de relatório do planejamento (exportável) | 🟢 Feature |
+| 4 | Comparação visual entre cenários salvos | 🟢 Feature |
+| 5 | Dashboard admin com métricas de uso | 🟡 Profissional |
+| 6 | Dark mode toggle (next-themes já está instalado!) | 🟢 UX |
+| 7 | PWA (Progressive Web App) para acesso mobile | 🟡 UX |
+| 8 | CI/CD com GitHub Actions | 🟡 DevOps |
+| 9 | Testes E2E com Playwright | 🟡 Qualidade |
+| 10 | Documentação Swagger customizada com exemplos | 🟡 Apresentação |
+
+---
+
+## 📌 Resumo Executivo
+
+```mermaid
+graph TD
+    A["Estado Atual"] --> B["Fase 1: Quick Wins"]
+    B --> C["Fase 2: Produção-Ready"]
+    C --> D["Fase 3: Diferenciais"]
+    
+    A --> |"~600 LOC"| A1["Formulário → API → Dashboard"]
+    B --> |"+1-2 semanas"| B1["Bugs corrigidos + Cenários + PieChart"]
+    C --> |"+3-4 semanas"| C1["Auth + DB + Testes + Metas"]
+    D --> |"+4-6 semanas"| D1["ML + Chatbot + PDF + PWA"]
+```
+
+| Métrica | Atual | Pós-Fase 3 |
+|---|---|---|
+| Endpoints API | 1 funcional | 10+ |
+| Cobertura de testes | 0% | 80%+ |
+| Persistência | Nenhuma | SQLite/PostgreSQL |
+| Autenticação | Nenhuma | JWT |
+| Score dimensões | 3 | 7+ (ou ML) |
+| Cenários simulação | 1 | 3 |
+| Gráficos | 1 (AreaChart) | 4+ (Pie, Multi-line, Bar) |
+
+> [!TIP]
+> **Para impressionar a banca**: Foco na Fase 1 + itens 1-3 da Fase 2 + item 1 da Fase 3 (ML). Isso cobre bugs, features úteis, e o diferencial acadêmico de Machine Learning.

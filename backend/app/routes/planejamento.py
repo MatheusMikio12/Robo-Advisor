@@ -1,23 +1,23 @@
 from fastapi import APIRouter
-from app.models.perfil import PerfilInvestidor
+from app.models.perfil import PlanejamentoInput
 from app.services.suitability import classificar_perfil
 from app.services.recomendador import gerar_carteira
 from app.services.simulador import simular_carteira
 
-router = APIRouter(prefix="/planejamento", tags=["Planejamento"], redirect_slashes=False)
+router = APIRouter(tags=["Planejamento"])
 
 
-@router.post("/")
-def gerar_planejamento(dados: dict):
+@router.post("/planejamento")
+def gerar_planejamento(dados: PlanejamentoInput):
+    """
+    Gera um planejamento financeiro completo:
+    1. Classifica o perfil de risco
+    2. Recomenda carteira de investimentos
+    3. Simula crescimento patrimonial
+    """
 
-    # 1️⃣ Adaptar o JSON externo para o modelo interno
-    perfil_input = PerfilInvestidor(
-        idade=dados["idade"],
-        renda=dados["renda_mensal"],
-        patrimonio=dados["patrimonio_atual"],
-        horizonte_anos=dados["prazo_anos"],
-        objetivo=dados["objetivo"]
-    )
+    # 1️⃣ Converter input do frontend para modelo interno
+    perfil_input = dados.to_perfil_investidor()
 
     # 2️⃣ Classificar perfil de risco
     perfil = classificar_perfil(perfil_input)
@@ -27,22 +27,22 @@ def gerar_planejamento(dados: dict):
 
     # 4️⃣ Simular crescimento da carteira
     simulacao = simular_carteira(
-        aporte_inicial=dados["patrimonio_atual"],
-        aporte_mensal=dados["aporte_mensal"],
-        anos=dados["prazo_anos"],
-        carteira=carteira
+        aporte_inicial=dados.patrimonio_atual,
+        aporte_mensal=dados.aporte_mensal,
+        anos=dados.prazo_anos,
+        carteira=carteira,
     )
 
-    # 5️⃣ Retornar planejamento completo (estrutura esperada pelo frontend)
+    # 5️⃣ Retornar planejamento completo
     return {
         "perfil": perfil,
         "carteira": carteira,
         "resumo": {
-            "valor_final": simulacao.get("valor_final", 0),
-            "total_investido": simulacao.get("total_investido", 0),
-            "retorno_absoluto": simulacao.get("retorno_absoluto", 0),
-            "retorno_percentual": simulacao.get("retorno_percentual", 0),
-            "cagr": simulacao.get("cagr", 0)
+            "valor_final": simulacao["valor_final"],
+            "total_investido": simulacao["total_investido"],
+            "retorno_absoluto": simulacao["retorno_absoluto"],
+            "retorno_percentual": simulacao["retorno_percentual"],
+            "cagr": simulacao["cagr"],
         },
-        "evolucao": simulacao.get("evolucao", [])
+        "evolucao": simulacao["evolucao"],
     }

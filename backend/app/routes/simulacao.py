@@ -2,14 +2,21 @@ from fastapi import APIRouter
 from app.models.simulacao import SimulacaoInput
 from app.services.simulador import simular_carteira
 
-router = APIRouter()
+router = APIRouter(tags=["Simulação"])
+
 
 @router.post("/simulacao")
-def simular(input: SimulacaoInput):
+def simular(dados: SimulacaoInput):
+    """Simula a evolução de uma carteira de investimentos."""
+    # Converte CarteiraItem (Pydantic) → list[dict] esperado pelo simulador
+    carteira_list = [
+        {"ativo": item.ativo, "percentual": item.percentual}
+        for item in dados.carteira
+    ]
     resultado = simular_carteira(
-        carteira=input.carteira,
-        aporte_inicial=input.aporte_inicial,
-        aporte_mensal=input.aporte_mensal,
-        anos=input.anos
+        carteira=carteira_list,
+        aporte_inicial=dados.aporte_inicial,
+        aporte_mensal=dados.aporte_mensal,
+        anos=dados.anos,
     )
     return resultado

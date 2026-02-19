@@ -1,6 +1,6 @@
 # 🤖 Robo-Advisor
 
-Um sistema inteligente de recomendação de investimentos que personaliza alocações de carteira baseado no perfil do investidor, objetivos financeiros e horizonte de tempo. O Robo-Advisor automatiza a análise de risco e fornece simulações de crescimento patrimonial.
+Um sistema inteligente de recomendação de investimentos e planejamento financeiro que personaliza alocações de carteira e traça rotas para alcançar seus objetivos financeiros. O Robo-Advisor automatiza a análise de risco, fornece simulações de crescimento patrimonial e calcula aportes necessários para suas metas.
 
 ## 📋 Sumário
 - [Características](#características)
@@ -16,7 +16,11 @@ Um sistema inteligente de recomendação de investimentos que personaliza aloca�
 - **Questionário Inteligente**: Coleta informações do investidor (idade, renda, patrimônio, prazo, objetivo)
 - **Classificação de Perfil**: Determina automaticamente o perfil de risco (Conservador, Moderado, Arrojado)
 - **Recomendação de Carteira**: Aloca investimentos em Ações, ETFs, Renda Fixa e FIIs conforme o perfil
-- **Simulação de Crescimento**: Projeta o patrimônio futuro com base em aportes mensais e retornos esperados
+- **Planejamento de Metas**: 
+    - **Cálculo de Aporte**: Descubra quanto investir mensalmente para atingir seu objetivo.
+    - **Cálculo de Prazo**: Saiba quanto tempo levará para alcançar sua meta com seu aporte atual.
+    - **Análise de Viabilidade**: Verifique se sua meta é realista com os parâmetros atuais.
+- **Simulação de Crescimento**: Projeta o patrimônio futuro com base em aportes mensais e retornos esperados (Juros Compostos)
 - **Interface Moderna**: Dashboard responsivo com gráficos de evolução e resumo financeiro
 
 ## 🛠️ Stack Tecnológico
@@ -30,15 +34,15 @@ Um sistema inteligente de recomendação de investimentos que personaliza aloca�
 - **Recharts** (gráficos)
 
 ### Backend
-- **Python 3.8+**
-- **FastAPI** (framework web)
+- **Python 3.10+**
+- **FastAPI** (framework web de alta performance)
 - **Uvicorn** (servidor ASGI)
-- **Pydantic** (validação de dados)
+- **Pydantic** (validação de dados robusta)
 
 ## 📦 Pré-requisitos
 
 - Node.js 16+ e npm/bun
-- Python 3.8+
+- Python 3.10+
 - Git
 
 ## 🚀 Instalação
@@ -76,14 +80,10 @@ bun install
 ```bash
 cd backend
 # Ativar ambiente virtual (se não estiver ativo)
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
-
-# Rodar servidor
+venv\Scripts\activate # ou source venv/bin/activate
 uvicorn app.main:app --reload --port 8000
 ```
-
-A API estará disponível em `http://localhost:8000`
+A API estará disponível em `http://localhost:8000` e a documentação interativa em `http://localhost:8000/docs`.
 
 ### Executar o Frontend
 ```bash
@@ -92,14 +92,12 @@ npm run dev
 # ou
 bun run dev
 ```
-
-O frontend estará disponível em `http://localhost:8080` (ou porta configurada pelo Vite)
+O frontend estará disponível em `http://localhost:8080` (ou porta configurada pelo Vite).
 
 ### Acessar a Aplicação
 1. Abra o navegador e vá para `http://localhost:8080`
-2. Preencha o formulário com suas informações
-3. Clique em "Analisar Perfil"
-4. Visualize sua carteira recomendada e simulação de crescimento
+2. Defina suas **Metas Financeiras** ou faça o **Questionário de Perfil**
+3. Visualize sua carteira recomendada e o plano para atingir seus objetivos
 
 ## 📁 Estrutura do Projeto
 
@@ -107,61 +105,68 @@ O frontend estará disponível em `http://localhost:8080` (ou porta configurada 
 Robo-Advisor/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                 # Aplicação principal + CORS
+│   │   ├── main.py                 # Aplicação principal + Configuração de Rotas
 │   │   ├── core/
-│   │   │   └── config.py          # Configurações
+│   │   │   └── config.py          # Configurações do ambiente
 │   │   ├── models/
 │   │   │   ├── perfil.py          # Modelo do perfil do investidor
+│   │   │   ├── meta.py            # Modelo de metas financeiras
 │   │   │   └── simulacao.py       # Modelo de simulação
 │   │   ├── routes/
-│   │   │   ├── planejamento.py    # Endpoint de planejamento
-│   │   │   ├── recomendacao.py    # Endpoint de recomendação
-│   │   │   └── simulacao.py       # Endpoint de simulação
+│   │   │   ├── planejamento.py    # Endpoint de planejamento (perfil + carteira)
+│   │   │   ├── meta.py            # Endpoint de metas (aporte vs prazo)
+│   │   │   ├── recomendacao.py    # Endpoint isolado de recomendação
+│   │   │   └── simulacao.py       # Endpoint isolado de simulação
 │   │   └── services/
-│   │       ├── suitability.py     # Classificação de perfil de risco
-│   │       ├── recomendador.py    # Geração de carteira
-│   │       └── simulador.py       # Simulação de crescimento
+│   │       ├── suitability.py     # Lógica de classificação de perfil
+│   │       ├── recomendador.py    # Lógica de alocação de ativos
+│   │       ├── simulador.py       # Motor de juros compostos
+│   │       └── planejador.py      # Motor de busca binária para metas
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── Header.tsx                # Cabeçalho
-│   │   │   ├── InvestorForm.tsx          # Formulário de entrada
-│   │   │   ├── InvestorProfile.tsx       # Perfil classificado
-│   │   │   ├── PortfolioCards.tsx        # Cards da carteira
-│   │   │   ├── FinancialSummary.tsx      # Resumo financeiro
-│   │   │   ├── EvolutionChart.tsx        # Gráfico de evolução
-│   │   │   └── ui/                       # Componentes base (shadcn/ui)
-│   │   ├── pages/
-│   │   │   ├── Index.tsx                 # Página principal
-│   │   │   └── NotFound.tsx              # 404
-│   │   ├── types/
-│   │   │   └── roboAdvisor.ts           # Tipos TypeScript
-│   │   ├── hooks/                        # React hooks customizados
-│   │   ├── lib/                          # Utilitários
-│   │   ├── App.tsx                       # App root
-│   │   └── main.tsx                      # Entry point
+│   │   ├── components/           # Componentes React modularizados
+│   │   ├── pages/                # Páginas da aplicação
+│   │   ├── types/                # Definições de tipos TypeScript
+│   │   ├── hooks/                # Hooks customizados
+│   │   └── lib/                  # Utilitários
 │   ├── vite.config.ts
-│   ├── tailwind.config.ts
-│   └── package.json
+│   └── tailwind.config.ts
 │
 └── README.md
 ```
 
-## 🔌 API Endpoints
+## 🔌 API Endpoints Principais
 
 ### POST `/planejamento`
-Gera um planejamento financeiro completo com perfil, carteira e simulação.
+Gera um planejamento financeiro completo com classificação de risco e carteira sugerida.
 
 **Request:**
 ```json
 {
-  "idade": 35,
-  "renda_mensal": 5000,
+  "idade": 30,
+  "renda_mensal": 8000,
+  "patrimonio_atual": 150000,
+  "aporte_mensal": 2000,
+  "prazo_anos": 15,
+  "objetivo": "crescimento",
+  "risco": 3
+}
+```
+
+### POST `/meta`
+Calcula o caminho para atingir um objetivo específico. O sistema inteligentemente decide o que calcular:
+- Se faltar `aporte_mensal` -> Calcula quanto você precisa investir.
+- Se faltar `prazo_desejado` -> Calcula quando você atingirá a meta.
+- Se tiver ambos -> Valida se a meta é viável.
+
+**Request (Exemplo: Calculando Aporte Necessário):**
+```json
+{
+  "valor_alvo": 1000000,
   "patrimonio_atual": 50000,
-  "aporte_mensal": 1000,
-  "prazo_anos": 10,
+  "prazo_desejado": 20,
   "objetivo": "aposentadoria"
 }
 ```
@@ -169,51 +174,26 @@ Gera um planejamento financeiro completo com perfil, carteira e simulação.
 **Response:**
 ```json
 {
-  "perfil": "Moderado",
-  "carteira": [
-    {"ativo": "Renda Fixa", "percentual": 45},
-    {"ativo": "ETFs", "percentual": 30},
-    {"ativo": "Ações", "percentual": 15},
-    {"ativo": "FIIs", "percentual": 10}
-  ],
-  "resumo": {
-    "valor_final": 187500.50,
-    "total_investido": 170000,
-    "retorno_absoluto": 17500.50,
-    "retorno_percentual": 10.29,
-    "cagr": 9.75
-  },
-  "evolucao": [
-    {"ano": 0, "valor": 50000},
-    {"ano": 1, "valor": 62150},
-    {"ano": 2, "valor": 75320}
-  ]
+  "modo": "calcular_aporte",
+  "aporte_mensal": 1850.50,
+  "simulacao": { ... },
+  "meta_atingida": true
 }
 ```
 
 ## 🎓 Perfis de Risco
 
 ### Conservador
-- **Alocação**: 70% Renda Fixa, 15% ETFs, 5% Ações, 10% FIIs
-- **Ideal para**: Investidores com horizonte curto ou baixa tolerância ao risco
+- **Foco**: Preservação de capital e segurança.
+- **Alocação**: 70% Renda Fixa, 15% ETFs, 5% Ações, 10% FIIs.
 
 ### Moderado
-- **Alocação**: 45% Renda Fixa, 30% ETFs, 15% Ações, 10% FIIs
-- **Ideal para**: Investidores com horizonte médio e risco equilibrado
+- **Foco**: Equilíbrio entre segurança e crescimento.
+- **Alocação**: 45% Renda Fixa, 30% ETFs, 15% Ações, 10% FIIs.
 
 ### Arrojado
-- **Alocação**: 25% Renda Fixa, 40% ETFs, 25% Ações, 10% FIIs
-- **Ideal para**: Investidores com horizonte longo e alta tolerância ao risco
-
-## 📊 Simulação de Crescimento
-
-A simulação utiliza retornos esperados anuais:
-- **Renda Fixa**: 8% a.a.
-- **ETFs**: 10% a.a.
-- **Ações**: 12% a.a.
-- **FIIs**: 9% a.a.
-
-O sistema computa mensalmente o crescimento de cada ativo conforme sua alocação percentual.
+- **Foco**: Maximização de retorno no longo prazo.
+- **Alocação**: 25% Renda Fixa, 40% ETFs, 25% Ações, 10% FIIs.
 
 ## 🤝 Contribuindo
 
@@ -225,7 +205,7 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para d
 
 ## 👨‍💻 Autor
 
-Desenvolvido como um sistema de planejamento financeiro inteligente.
+Desenvolvido como um sistema de planejamento financeiro inteligente e moderno.
 
 ---
 
