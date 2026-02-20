@@ -1,3 +1,6 @@
+import secrets
+
+from pydantic import Field
 from pydantic_settings import BaseSettings
 from typing import List
 
@@ -10,7 +13,20 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
-    # CORS — origens permitidas (separar por vírgula na env var)
+    # ─── Segurança JWT ────────────────────────────────────────────────
+    # DEVE ser definida no .env com uma string aleatória forte.
+    # O default gera uma chave aleatória em runtime (seguro, mas tokens
+    # são invalidados a cada restart — ideal para dev, NÃO para prod).
+    secret_key: str = Field(
+        default_factory=lambda: secrets.token_urlsafe(32),
+        description="Chave secreta para assinatura de tokens JWT",
+    )
+    access_token_expire_minutes: int = 30
+
+    # ─── Banco de Dados ───────────────────────────────────────────────
+    database_url: str = "sqlite:///./sql_app.db"
+
+    # ─── CORS — origens permitidas ────────────────────────────────────
     cors_origins: List[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",

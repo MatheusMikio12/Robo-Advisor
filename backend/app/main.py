@@ -6,6 +6,11 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.routes import meta, planejamento, recomendacao, simulacao
+from app.auth.routes import auth
+from app.database import engine, Base
+
+# Create tables (for development without alembic)
+Base.metadata.create_all(bind=engine)
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +28,11 @@ app.add_middleware(
     allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Accept"],
+    allow_headers=["Content-Type", "Accept", "Authorization"],
 )
 
 # Registrar TODOS os routers
+app.include_router(auth.router)
 app.include_router(meta.router)
 app.include_router(planejamento.router)
 app.include_router(recomendacao.router)

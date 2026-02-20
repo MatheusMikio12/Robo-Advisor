@@ -1,24 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanejamentoResponse } from "@/types/roboAdvisor";
 import { DollarSign, TrendingUp, Percent, BarChart3 } from "lucide-react";
+import { formatCurrency, formatPercent } from "@/utils/format";
 
 interface FinancialSummaryProps {
   resumo: PlanejamentoResponse["resumo"];
 }
 
 const FinancialSummary = ({ resumo }: FinancialSummaryProps) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
-
-  const formatPercent = (value: number) => {
-    return `${value.toFixed(2)}%`;
-  };
-
   const metrics = [
     {
       label: "Valor Final Projetado",
@@ -66,9 +55,8 @@ const FinancialSummary = ({ resumo }: FinancialSummaryProps) => {
           {metrics.map((metric, index) => (
             <div
               key={index}
-              className={`relative overflow-hidden rounded-xl border p-4 ${
-                metric.highlight ? "border-accent/50 bg-accent/5" : "bg-card"
-              }`}
+              className={`relative overflow-hidden rounded-xl border p-4 ${metric.highlight ? "border-accent/50 bg-accent/5" : "bg-card"
+                }`}
             >
               <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${metric.color} text-primary-foreground`}>
                 {metric.icon}

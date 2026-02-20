@@ -2,36 +2,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EvolucaoPatrimonio } from "@/types/roboAdvisor";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { formatCurrency, formatCurrencyShort } from "@/utils/format";
 
 interface EvolutionChartProps {
   evolucao: EvolucaoPatrimonio[];
 }
 
 const EvolutionChart = ({ evolucao }: EvolutionChartProps) => {
-  const formatCurrency = (value: number) => {
-    if (value >= 1000000) {
-      return `R$ ${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `R$ ${(value / 1000).toFixed(0)}K`;
-    }
-    return `R$ ${value.toFixed(0)}`;
-  };
-
-  const formatTooltipValue = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-card p-3 shadow-lg">
           <p className="text-sm font-medium text-muted-foreground">Ano {label}</p>
           <p className="text-lg font-bold text-primary">
-            {formatTooltipValue(payload[0].value)}
+            {formatCurrency(payload[0].value)}
           </p>
         </div>
       );
@@ -69,7 +53,7 @@ const EvolutionChart = ({ evolucao }: EvolutionChartProps) => {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                tickFormatter={formatCurrency}
+                tickFormatter={formatCurrencyShort}
                 width={80}
               />
               <Tooltip content={<CustomTooltip />} />

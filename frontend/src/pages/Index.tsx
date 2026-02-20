@@ -10,10 +10,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { InvestorFormData, PlanejamentoResponse } from "@/types/roboAdvisor";
 import { AlertCircle } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/config";
 
 const Index = () => {
+  const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<PlanejamentoResponse | null>(null);
@@ -27,6 +28,7 @@ const Index = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(data),
       });

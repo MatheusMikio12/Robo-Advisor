@@ -268,8 +268,10 @@ def calcular_meta(
 
     # ─── Cenário 3: ambos informados → verificar viabilidade ──────
     # Se chegamos aqui, ambos os valores foram fornecidos (cenários 1 e 2 retornam antes)
-    assert aporte_mensal is not None, "aporte_mensal deve estar definido no cenário 3"
-    assert prazo_desejado is not None, "prazo_desejado deve estar definido no cenário 3"
+    if aporte_mensal is None:
+        raise ValueError("aporte_mensal deve estar definido no cenário 3")
+    if prazo_desejado is None:
+        raise ValueError("prazo_desejado deve estar definido no cenário 3")
 
     simulacao = _simular_valor_futuro(
         patrimonio_atual, aporte_mensal, prazo_desejado, retorno_anual

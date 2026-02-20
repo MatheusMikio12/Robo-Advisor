@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InvestorFormData } from "@/types/roboAdvisor";
 import { TrendingUp, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/utils/format";
 
 interface InvestorFormProps {
   onSubmit: (data: InvestorFormData) => void;
@@ -32,13 +33,6 @@ const InvestorForm = ({ onSubmit, isLoading }: InvestorFormProps) => {
       ...prev,
       [field]: typeof value === "string" && field !== "objetivo" ? Number(value) : value,
     }));
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
   };
 
   return (

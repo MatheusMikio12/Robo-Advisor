@@ -49,6 +49,7 @@ import {
     MetaFinanceiraResponse,
     EvolucaoPatrimonio,
 } from "@/types/roboAdvisor";
+import { useAuth } from "@/contexts/AuthContext";
 import {
     Target,
     Loader2,
@@ -73,27 +74,8 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-
-// ─── URL DA API ──────────────────────────────────────────────────────
-// import.meta.env é uma feature do Vite para variáveis de ambiente.
-// O prefixo VITE_ é obrigatório para expor a variável no frontend.
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
-// ─── FORMATAR MOEDA ──────────────────────────────────────────────────
-// Intl.NumberFormat é a API nativa para formatação i18n (internacionalização).
-// Muito melhor que fazer string concatenation manual.
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        minimumFractionDigits: 2,
-    }).format(value);
-
-const formatCurrencyShort = (value: number) => {
-    if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
-    if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}K`;
-    return `R$ ${value.toFixed(0)}`;
-};
+import { API_URL } from "@/config";
+import { formatCurrency, formatCurrencyShort } from "@/utils/format";
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────
 const GoalTracker = () => {
@@ -117,6 +99,7 @@ const GoalTracker = () => {
     const [resultado, setResultado] = useState<MetaFinanceiraResponse | null>(
         null
     );
+    const { token } = useAuth();
 
     // ─── HANDLER DE SUBMIT ──────────────────────────────────────────
     const handleSubmit = async (e: React.FormEvent) => {
@@ -139,7 +122,10 @@ const GoalTracker = () => {
 
             const response = await fetch(`${API_URL}/meta`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify(payload),
             });
 

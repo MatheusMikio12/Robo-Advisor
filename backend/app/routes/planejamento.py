@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.auth.models.user import User
+from app.core.dependencies import get_current_user
 from app.models.perfil import PlanejamentoInput
 from app.services.suitability import classificar_perfil
 from app.services.recomendador import gerar_carteira
@@ -8,7 +10,10 @@ router = APIRouter(tags=["Planejamento"])
 
 
 @router.post("/planejamento")
-def gerar_planejamento(dados: PlanejamentoInput):
+def gerar_planejamento(
+    dados: PlanejamentoInput,
+    current_user: User = Depends(get_current_user),
+):
     """
     Gera um planejamento financeiro completo:
     1. Classifica o perfil de risco
