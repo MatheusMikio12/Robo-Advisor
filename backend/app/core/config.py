@@ -1,8 +1,11 @@
+import logging
 import secrets
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -14,12 +17,12 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     # ─── Segurança JWT ────────────────────────────────────────────────
-    # DEVE ser definida no .env com uma string aleatória forte.
-    # O default gera uma chave aleatória em runtime (seguro, mas tokens
-    # são invalidados a cada restart — ideal para dev, NÃO para prod).
+    # Em produção (DEBUG=False), SECRET_KEY DEVE ser definida no .env.
+    # Sem ela, a aplicação recusa inicializar para proteger tokens JWT.
+    # Gere uma chave com: python -c "import secrets; print(secrets.token_urlsafe(32))"
     secret_key: str = Field(
-        default_factory=lambda: secrets.token_urlsafe(32),
-        description="Chave secreta para assinatura de tokens JWT",
+        default="",
+        description="Chave secreta para assinatura de tokens JWT. Obrigatória em produção.",
     )
     access_token_expire_minutes: int = 30
 
@@ -35,6 +38,23 @@ class Settings(BaseSettings):
         "http://localhost:8080",
         "http://127.0.0.1:8080",
     ]
+
+    @model_validator(mode="after")
+    def validate_secret_key(self) -> "Settings":
+        if not self.secret_key:
+            if not self.debug:
+                raise ValueError(
+                    "SECRET_KEY deve ser definida no .env quando DEBUG=False (produção). "
+                    'Gere com: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+                )
+            # Modo desenvolvimento: gera automaticamente com aviso
+            object.__setattr__(self, "secret_key", secrets.token_urlsafe(32))
+            logger.warning(
+                "SECRET_KEY não configurada — chave gerada automaticamente. "
+                "Tokens JWT serão invalidados a cada restart. "
+                "Defina SECRET_KEY no .env para evitar isso."
+            )
+        return self
 
     class Config:
         env_file = ".env"
