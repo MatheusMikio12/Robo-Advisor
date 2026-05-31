@@ -3,14 +3,31 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
-from app.routes import meta, planejamento, recomendacao, simulacao
+from app.core.limiter import limiter
+from app.routes import meta, planejamento, recomendacao, simulacao, suitability
 from app.auth.routes import auth
 from app.database import engine, Base
+# Garante que todos os models SQLAlchemy sejam registrados antes do create_all
+from app.models import suitability_db  # noqa: F401
+from app.models import revoked_token  # noqa: F401
 
 # Create tables (for development without alembic)
 Base.metadata.create_all(bind=engine)
+
+# Seed do usuário administrador padrão (idempotente)
+from app.auth.services import auth_service  # noqa: E402
+from app.database import SessionLocal  # noqa: E402
+
+_seed_db = SessionLocal()
+try:
+    auth_service.seed_admin_user(_seed_db)
+finally:
+    _seed_db.close()
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +39,16 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # CORS — origens lidas das configurações
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Accept", "Authorization"],
 )
 
@@ -37,9 +58,10 @@ app.include_router(meta.router)
 app.include_router(planejamento.router)
 app.include_router(recomendacao.router)
 app.include_router(simulacao.router)
+app.include_router(suitability.router)
 
 
-# ─── Handler global de exceções ─────────────────────────────────────
+# ─── Handler global de exceções ─────────────────────────────────────────────
 # Captura exceções não tratadas e retorna mensagem segura (sem stack trace)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

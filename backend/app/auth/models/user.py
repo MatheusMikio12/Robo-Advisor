@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, Integer, String
 from app.database import Base
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ─── SQLAlchemy Model (camada de dados) ──────────────────────────────
@@ -23,8 +23,17 @@ class UserCreate(UserBase):
         ...,
         min_length=8,
         max_length=72,  # bcrypt trunca após 72 bytes
-        description="Senha do usuário (8-72 caracteres)",
+        description="Senha do usuário (8-72 caracteres, com maiúscula e número)",
     )
+
+    @field_validator("password")
+    @classmethod
+    def validar_forca_senha(cls, v: str) -> str:
+        if not any(c.isupper() for c in v):
+            raise ValueError("A senha deve conter ao menos uma letra maiúscula.")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("A senha deve conter ao menos um número.")
+        return v
 
 
 class UserResponse(UserBase):
@@ -40,5 +49,18 @@ class Token(BaseModel):
     token_type: str
 
 
+class TokenPair(BaseModel):
+    """Retornado no login — inclui access e refresh token."""
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 class TokenData(BaseModel):
     email: str | None = None
+    jti: str | None = None  # JWT ID — usado para revogação de refresh tokens
+    exp: int | None = None  # timestamp de expiração (unix)

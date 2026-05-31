@@ -8,6 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { API_URL } from "@/config";
 
+/** Extrai mensagem legível do corpo de erro da API (string simples ou array de validação 422). */
+function extractErrorMessage(body: unknown, fallback: string): string {
+    const detail = (body as { detail?: unknown })?.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) return detail[0]?.msg ?? fallback;
+    return fallback;
+}
+
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -20,26 +28,26 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        const trimmedEmail = email.trim();
+
         try {
             if (isRegistering) {
-                // Register API Call
                 const response = await fetch(`${API_URL}/auth/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ email: trimmedEmail, password }),
                 });
 
                 if (response.ok) {
                     toast({ title: "Conta criada com sucesso", description: "Faça login com suas novas credenciais." });
                     setIsRegistering(false);
                 } else {
-                    const errorData = await response.json();
-                    toast({ title: "Erro no registro", description: errorData.detail || "Não foi possível criar a conta.", variant: "destructive" });
+                    const errorData = await response.json().catch(() => ({}));
+                    toast({ title: "Erro no registro", description: extractErrorMessage(errorData, "Não foi possível criar a conta."), variant: "destructive" });
                 }
             } else {
-                // Login API Call
                 const formData = new URLSearchParams();
-                formData.append("username", email);
+                formData.append("username", trimmedEmail);
                 formData.append("password", password);
 
                 const response = await fetch(`${API_URL}/auth/login`, {
@@ -50,16 +58,16 @@ export default function Login() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    login(data.access_token);
+                    login(data.access_token, data.refresh_token);
                     toast({ title: "Login realizado com sucesso", description: "Bem-vindo de volta!" });
                     navigate("/");
                 } else {
-                    const errorData = await response.json();
-                    toast({ title: "Erro no login", description: errorData.detail || "Credenciais inválidas.", variant: "destructive" });
+                    const errorData = await response.json().catch(() => ({}));
+                    toast({ title: "Erro no login", description: extractErrorMessage(errorData, "Credenciais inválidas."), variant: "destructive" });
                 }
             }
         } catch (error) {
-            console.error(error);
+            if (import.meta.env.DEV) console.error(error);
             toast({ title: "Erro de conexão", description: "Não foi possível se conectar ao servidor.", variant: "destructive" });
         } finally {
             setIsLoading(false);
@@ -82,30 +90,39 @@ export default function Login() {
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 E-mail
                             </label>
                             <Input
+                                id="email"
                                 type="email"
                                 placeholder="seu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                autoComplete="email"
                                 className="bg-background/50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 Senha
                             </label>
                             <Input
+                                id="password"
                                 type="password"
                                 placeholder="Sua senha"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                autoComplete={isRegistering ? "new-password" : "current-password"}
                                 className="bg-background/50"
                             />
+                            {isRegistering && (
+                                <p className="text-xs text-muted-foreground">
+                                    Mínimo 8 caracteres, com ao menos uma letra maiúscula e um número.
+                                </p>
+                            )}
                         </div>
                         <Button
                             type="submit"
@@ -124,7 +141,8 @@ export default function Login() {
                         {isRegistering ? "Já possui uma conta?" : "Ainda não tem cadastro?"}{" "}
                         <button
                             type="button"
-                            className="text-primary hover:underline font-medium focus:outline-none"
+                            aria-label={isRegistering ? "Ir para o login" : "Criar uma nova conta"}
+                            className="text-primary hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                             onClick={() => setIsRegistering(!isRegistering)}
                         >
                             {isRegistering ? "Fazer Login" : "Criar uma agora"}

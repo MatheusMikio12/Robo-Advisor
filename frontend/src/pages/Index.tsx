@@ -8,10 +8,46 @@ import EvolutionChart from "@/components/EvolutionChart";
 import GoalTracker from "@/components/GoalTracker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { InvestorFormData, PlanejamentoResponse } from "@/types/roboAdvisor";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/config";
+import { apiFetch, ApiError, authHeaders } from "@/utils/api";
+
+const ResultsSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    {/* Profile skeleton */}
+    <div className="rounded-xl border p-6 space-y-3">
+      <Skeleton className="h-6 w-40" />
+      <Skeleton className="h-4 w-64" />
+    </div>
+    {/* Portfolio cards skeleton */}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="rounded-xl border p-4 space-y-3">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-6 w-16" />
+        </div>
+      ))}
+    </div>
+    {/* Summary skeleton */}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="rounded-xl border p-4 space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-7 w-32" />
+        </div>
+      ))}
+    </div>
+    {/* Chart skeleton */}
+    <div className="rounded-xl border p-6">
+      <Skeleton className="h-[350px] w-full" />
+    </div>
+  </div>
+);
 
 const Index = () => {
   const { token } = useAuth();
@@ -24,26 +60,18 @@ const Index = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/planejamento`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
-      }
-
-      const result: PlanejamentoResponse = await response.json();
+      const result = await apiFetch<PlanejamentoResponse>(
+        `${API_URL}/planejamento`,
+        { method: "POST", headers: authHeaders(token), body: JSON.stringify(data) }
+      );
       setResultado(result);
     } catch (err) {
       setError(
-        err instanceof Error
+        err instanceof ApiError
           ? err.message
-          : "Erro ao conectar com o servidor. Verifique se a API está rodando."
+          : err instanceof Error
+            ? err.message
+            : "Erro ao conectar com o servidor. Verifique se a API está rodando."
       );
     } finally {
       setIsLoading(false);
@@ -80,9 +108,23 @@ const Index = () => {
             </Alert>
           )}
 
+          {/* Loading skeleton */}
+          {isLoading && <ResultsSkeleton />}
+
           {/* Results */}
-          {resultado && (
+          {!isLoading && resultado && (
             <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setResultado(null)}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Nova Análise
+                </Button>
+              </div>
               <InvestorProfile perfil={resultado.perfil} />
               <PortfolioCards carteira={resultado.carteira} />
               <FinancialSummary resumo={resultado.resumo} />
@@ -91,12 +133,6 @@ const Index = () => {
           )}
 
           {/* ─── Seção de Metas Financeiras ─── */}
-          {/*
-            CONCEITO: Separator cria uma divisão visual clara entre
-            as seções de "Planejamento" (acima) e "Metas" (abaixo).
-            O GoalTracker é independente — tem seu próprio formulário
-            e faz suas próprias chamadas à API.
-          */}
           <Separator className="my-8" />
 
           <div className="text-center">

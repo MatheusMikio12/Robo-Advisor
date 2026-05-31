@@ -75,7 +75,10 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { API_URL } from "@/config";
+import { apiFetch, ApiError, authHeaders } from "@/utils/api";
 import { formatCurrency, formatCurrencyShort } from "@/utils/format";
+import type { TooltipProps } from "recharts";
+import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────
 const GoalTracker = () => {
@@ -120,29 +123,14 @@ const GoalTracker = () => {
                     : { aporte_mensal: formData.aporte_mensal }),
             };
 
-            const response = await fetch(`${API_URL}/meta`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => null);
-                throw new Error(
-                    errData?.detail?.[0]?.msg ||
-                    errData?.detail ||
-                    `Erro na requisição: ${response.status}`
-                );
-            }
-
-            const result: MetaFinanceiraResponse = await response.json();
+            const result = await apiFetch<MetaFinanceiraResponse>(
+                `${API_URL}/meta`,
+                { method: "POST", headers: authHeaders(token), body: JSON.stringify(payload) }
+            );
             setResultado(result);
         } catch (err) {
             setError(
-                err instanceof Error
+                err instanceof ApiError || err instanceof Error
                     ? err.message
                     : "Erro ao conectar com o servidor."
             );
@@ -168,7 +156,7 @@ const GoalTracker = () => {
     };
 
     // ─── TOOLTIP CUSTOMIZADO PARA O GRÁFICO ────────────────────────────
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
         if (active && payload?.length) {
             return (
                 <div className="rounded-lg border bg-card p-3 shadow-lg">
@@ -176,7 +164,7 @@ const GoalTracker = () => {
                         Ano {label}
                     </p>
                     <p className="text-lg font-bold text-primary">
-                        {formatCurrency(payload[0].value)}
+                        {formatCurrency(Number(payload[0].value))}
                     </p>
                 </div>
             );
@@ -669,7 +657,7 @@ const GoalChart = ({ evolucao, valorAlvo }: GoalChartProps) => {
         meta: valorAlvo,
     }));
 
-    const CustomChartTooltip = ({ active, payload, label }: any) => {
+    const CustomChartTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
         if (active && payload?.length) {
             return (
                 <div className="rounded-lg border bg-card p-3 shadow-lg">
@@ -677,7 +665,7 @@ const GoalChart = ({ evolucao, valorAlvo }: GoalChartProps) => {
                         Ano {label}
                     </p>
                     <p className="text-lg font-bold text-primary">
-                        {formatCurrency(payload[0].value)}
+                        {formatCurrency(Number(payload[0].value))}
                     </p>
                     <p className="text-xs text-muted-foreground">
                         Meta: {formatCurrency(valorAlvo)}

@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EvolucaoPatrimonio } from "@/types/roboAdvisor";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import type { TooltipProps } from "recharts";
+import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 import { TrendingUp } from "lucide-react";
 import { formatCurrency, formatCurrencyShort } from "@/utils/format";
 
@@ -8,20 +10,36 @@ interface EvolutionChartProps {
   evolucao: EvolucaoPatrimonio[];
 }
 
+const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-card p-3 shadow-lg">
+        <p className="text-sm font-medium text-muted-foreground">Ano {label}</p>
+        <p className="text-lg font-bold text-primary">
+          {formatCurrency(Number(payload[0].value))}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const EvolutionChart = ({ evolucao }: EvolutionChartProps) => {
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-lg border bg-card p-3 shadow-lg">
-          <p className="text-sm font-medium text-muted-foreground">Ano {label}</p>
-          <p className="text-lg font-bold text-primary">
-            {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  if (!evolucao || evolucao.length === 0) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle>Evolução do Patrimônio</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex h-[350px] items-center justify-center">
+          <p className="text-muted-foreground">Nenhum dado disponível para exibir.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg">

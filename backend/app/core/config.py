@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     )
     access_token_expire_minutes: int = 30
 
+    # ─── Usuário administrador (seed automático no startup) ───────────
+    # Criado na inicialização se ainda não existir. Sobrescreva via .env.
+    admin_email: str = "admin@admin.com"
+    admin_password: str = "Admin@123"
+
     # ─── Banco de Dados ───────────────────────────────────────────────
     database_url: str = "sqlite:///./sql_app.db"
 

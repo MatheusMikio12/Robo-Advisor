@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - DATABASE_URL=sqlite:////data/sql_app.db
+      # Sem fallback: docker-compose up falha com mensagem clara se SECRET_KEY não estiver no ambiente/.env
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY deve ser definida. Gere com: python -c "import secrets; print(secrets.token_urlsafe(32))"}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    volumes:
+      # Monta apenas o diretório de dados — evita shadowing do código da app
+      - sqlite_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Sobrescreva em deploy remoto: VITE_API_URL=https://api.seu-dominio.com docker-compose up --build
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  sqlite_data:

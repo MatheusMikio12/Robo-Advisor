@@ -53,15 +53,20 @@ def simular_carteira(
     if total_investido > 0:
         retorno_absoluto = saldo - total_investido
         retorno_percentual = (retorno_absoluto / total_investido) * 100
-        cagr = (saldo / total_investido) ** (1 / anos) - 1
+        # CAGR exato: taxa de retorno anual composta da carteira.
+        # Como todo o capital (inicial e aportes) rende à mesma taxa mensal ponderada,
+        # esta é a própria taxa interna de retorno (IRR) do fluxo — sem necessidade de XIRR.
+        # (A fórmula antiga (saldo/total_investido)^(1/anos)-1 subestimava o retorno
+        #  porque tratava aportes mensais como se investidos no instante zero.)
+        cagr = (1 + retorno_mensal_ponderado) ** 12 - 1
     else:
         retorno_absoluto = 0.0
         retorno_percentual = 0.0
         cagr = 0.0
 
-    # Fallback se não houver evolução (prazo < 1 ano)
+    # Fallback de segurança — na prática inalcançável pois anos >= 1 (validado no model)
     if not evolucao:
-        evolucao = [{"ano": 0, "valor": aporte_inicial}]
+        evolucao = [{"ano": 0, "valor": round(saldo, 2)}]
 
     return {
         "valor_final": round(saldo, 2),
