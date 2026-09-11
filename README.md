@@ -1,6 +1,6 @@
-# 🤖 Robo-Advisor
+# Prisma — seu concierge financeiro
 
-Um sistema inteligente de recomendação de investimentos e planejamento financeiro que personaliza alocações de carteira e traça rotas para alcançar seus objetivos financeiros. O Robo-Advisor automatiza a análise de risco, fornece simulações de crescimento patrimonial e calcula aportes necessários para suas metas.
+Um concierge financeiro conversacional que transforma objetivos em planos claros. O Prisma personaliza alocações de carteira, simula cenários e calcula caminhos possíveis para as metas do usuário.
 
 > ⚠️ Projeto acadêmico (FIAP). Sistema educacional para fins de demonstração — **não é** conselho financeiro profissional.
 

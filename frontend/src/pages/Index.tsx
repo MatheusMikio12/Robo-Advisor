@@ -84,18 +84,14 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-6xl space-y-8">
-          {/* Hero Section */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Planeje seu futuro financeiro
-            </h2>
-            <p className="mt-3 text-lg text-muted-foreground">
-              Receba recomendações personalizadas baseadas no seu perfil de investidor
-            </p>
+          <div className="prisma-intro">
+            <p>Uma conversa de cada vez</p>
+            <h2>Vamos transformar seus planos em decisões mais claras.</h2>
+            <span>Conte o que importa agora. O Prisma organiza os números e mostra caminhos possíveis.</span>
           </div>
 
           {/* Form */}
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-6xl">
             <InvestorForm onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
 
@@ -114,7 +110,11 @@ const Index = () => {
           {/* Results */}
           {!isLoading && resultado && (
             <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-end">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-primary">Seu primeiro plano</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">Este é o caminho que desenhamos juntos.</h2>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -122,7 +122,7 @@ const Index = () => {
                   className="gap-2"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Nova Análise
+                  Conversar de novo
                 </Button>
               </div>
               <InvestorProfile perfil={resultado.perfil} />
@@ -137,10 +137,10 @@ const Index = () => {
 
           <div className="text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              🎯 Metas Financeiras
+              Suas metas, no seu ritmo
             </h2>
             <p className="mt-3 text-lg text-muted-foreground">
-              Defina um valor-alvo e descubra o aporte ideal ou prazo necessário
+              Explore um objetivo específico e compare prazo, aporte e viabilidade.
             </p>
           </div>
 
@@ -153,7 +153,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t bg-card/50 py-6 mt-12">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 Robo Advisor. Planejamento financeiro inteligente.</p>
+          <p>Prisma © 2026 · Informação para decisões mais conscientes.</p>
         </div>
       </footer>
     </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { API_URL } from "@/config";
 
 /** Extrai mensagem legível do corpo de erro da API (string simples ou array de validação 422). */
@@ -75,16 +75,18 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="login-prisma min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-lg border-primary/20 bg-card/50 backdrop-blur-xl">
                 <CardHeader className="space-y-1">
+                    <div className="prisma-mark mx-auto mb-3"><Sparkles className="h-5 w-5" /></div>
+                    <p className="text-center text-sm font-semibold text-primary">Prisma</p>
                     <CardTitle className="text-2xl font-bold text-center tracking-tight text-primary">
-                        {isRegistering ? "Criar Conta" : "Entrar"}
+                        {isRegistering ? "Vamos começar?" : "Que bom ter você de volta"}
                     </CardTitle>
                     <CardDescription className="text-center">
                         {isRegistering
-                            ? "Registre-se para salvar seus planejamentos."
-                            : "Entre para acessar sua área de planejamento."}
+                            ? "Crie sua conta para construir seu primeiro plano em uma conversa."
+                            : "Entre para continuar sua jornada financeira."}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class Settings(BaseSettings):
     """Configurações centralizadas da aplicação, lidas de variáveis de ambiente."""
 
-    app_name: str = "Robo-Advisor"
+    app_name: str = "Prisma"
     debug: bool = False
     api_host: str = "0.0.0.0"
     api_port: int = 8000

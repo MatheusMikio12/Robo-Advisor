@@ -1,5 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -11,8 +10,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    --background: 220 33% 98%;
+    --foreground: 225 54% 16%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -20,7 +19,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 60%;
+    --primary: 229 82% 57%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96%;
@@ -29,7 +28,7 @@ All colors MUST be HSL.
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 142 76% 36%;
+    --accent: 188 61% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -37,7 +36,7 @@ All colors MUST be HSL.
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --ring: 229 82% 57%;
 
     --radius: 0.75rem;
 
@@ -55,7 +54,7 @@ All colors MUST be HSL.
 
     --sidebar: 0 0% 98%;
 
-    --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
     --font-serif: 'Merriweather', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
@@ -141,5 +140,88 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    min-width: 320px;
   }
+}
+
+@layer components {
+  .prisma-mark,
+  .prisma-orb {
+    @apply flex shrink-0 items-center justify-center text-white;
+    background: linear-gradient(145deg, #315cf5 8%, #7357d9 58%, #42bfd3 115%);
+    box-shadow: 0 8px 24px hsl(229 82% 57% / 0.2);
+  }
+
+  .prisma-mark { @apply h-10 w-10 rounded-[14px]; }
+  .prisma-orb { @apply h-8 w-8 rounded-full; }
+
+  .prisma-intro {
+    @apply mx-auto max-w-3xl pb-2 pt-5 text-left;
+  }
+
+  .prisma-intro > p { @apply mb-3 text-sm font-semibold text-primary; }
+  .prisma-intro h2 { @apply max-w-2xl text-3xl font-semibold leading-tight tracking-[-0.035em] text-foreground sm:text-5xl; }
+  .prisma-intro > span { @apply mt-4 block max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg; }
+
+  .concierge-shell {
+    @apply overflow-hidden border bg-white;
+    border-radius: 1.5rem;
+    box-shadow: 0 28px 80px hsl(225 54% 16% / 0.1);
+  }
+
+  .concierge-progress { @apply h-1 bg-secondary; }
+  .concierge-progress span {
+    @apply block h-full transition-[width] duration-500;
+    background: linear-gradient(90deg, #315cf5, #7357d9, #42bfd3);
+  }
+
+  .concierge-layout { @apply grid min-h-[560px] lg:grid-cols-[minmax(0,1fr)_320px]; }
+  .conversation-pane { @apply flex min-w-0 flex-col p-6 sm:p-10; }
+  .conversation-heading { @apply flex items-center gap-3 border-b pb-5; }
+  .conversation-history { @apply flex max-h-28 flex-col items-end gap-2 overflow-hidden py-4; }
+  .history-row span { @apply inline-block rounded-2xl rounded-br-sm bg-secondary px-4 py-2 text-sm text-secondary-foreground; }
+  .conversation-current { @apply my-auto max-w-2xl py-6; }
+  .conversation-current h2 { @apply text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl; }
+  .conversation-current > p { @apply mt-3 max-w-xl leading-7 text-muted-foreground; }
+
+  .objective-grid { @apply mt-8 grid gap-3 sm:grid-cols-2; }
+  .objective-grid button {
+    @apply relative flex min-h-28 flex-col items-start rounded-2xl border bg-white p-5 text-left outline-none transition-colors hover:border-primary/50 hover:bg-secondary/40 focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .objective-grid button strong { @apply pr-6 text-sm font-semibold; }
+  .objective-grid button span { @apply mt-1 pr-5 text-xs leading-5 text-muted-foreground; }
+  .objective-grid button svg { @apply absolute right-4 top-5 text-primary; }
+
+  .answer-composer { @apply mt-8 flex max-w-xl items-center gap-3 rounded-2xl border bg-secondary/40 p-2 pl-4; }
+  .answer-composer > span { @apply shrink-0 text-sm font-semibold text-muted-foreground; }
+  .answer-composer input { @apply h-12 border-0 bg-transparent text-xl font-semibold shadow-none focus-visible:ring-0; }
+  .answer-composer button { @apply h-12 w-12 shrink-0 rounded-xl; }
+
+  .back-button { @apply mt-7 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring; }
+  .review-kicker { @apply mb-4 flex items-center gap-2 text-sm font-semibold text-primary; }
+  .review-summary { @apply my-7 grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-3; }
+  .review-summary div { @apply flex flex-col bg-white p-4; }
+  .review-summary span { @apply text-xs text-muted-foreground; }
+  .review-summary strong { @apply mt-1 text-sm font-semibold; }
+  .prisma-cta { @apply gap-2 rounded-xl; }
+
+  .context-pane { @apply hidden border-l bg-[#172554] p-8 text-white lg:flex lg:flex-col; }
+  .context-title { @apply text-sm font-semibold; }
+  .context-copy { @apply mt-2 text-sm leading-6 text-blue-100/65; }
+  .context-pane dl { @apply mt-8 space-y-1; }
+  .context-pane dl div { @apply border-b border bg-transparent py-4; border-color: rgb(255 255 255 / 0.1); }
+  .context-pane dt { @apply text-xs text-blue-100/55; }
+  .context-pane dd { @apply mt-1 text-sm font-medium; }
+  .privacy-note { @apply mt-auto border-t pt-5 text-xs leading-5 text-blue-100/55; border-color: rgb(255 255 255 / 0.1); }
+
+  .login-prisma {
+    background:
+      radial-gradient(circle at 18% 20%, hsl(229 82% 57% / 0.12), transparent 30%),
+      radial-gradient(circle at 85% 78%, hsl(188 61% 54% / 0.1), transparent 28%),
+      hsl(var(--background));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .concierge-progress span { transition: none; }
 }

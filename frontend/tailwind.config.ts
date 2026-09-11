@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -96,7 +97,7 @@ export default {
   		},
   		fontFamily: {
   			sans: [
-  				'Poppins',
+				'Manrope',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -131,5 +132,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 } satisfies Config;
