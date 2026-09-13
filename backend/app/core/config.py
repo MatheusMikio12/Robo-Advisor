@@ -2,7 +2,7 @@ import logging
 import secrets
 
 from pydantic import Field, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     debug: bool = False
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_sender: str = ""
+    frontend_url: str = "http://localhost:8080"
+    llm_provider: str = "deterministic"
+    ollama_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:8b"
+    rate_limit_enabled: bool = True
 
     # ─── Segurança JWT ────────────────────────────────────────────────
     # Em produção (DEBUG=False), SECRET_KEY DEVE ser definida no .env.
@@ -61,9 +71,7 @@ class Settings(BaseSettings):
             )
         return self
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 # Instância global reutilizada via import

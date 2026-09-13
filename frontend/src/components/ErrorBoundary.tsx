@@ -32,7 +32,9 @@ class ErrorBoundary extends Component<Props, State> {
               Algo deu errado
             </h2>
             <p className="text-sm text-muted-foreground">
-              {this.state.error?.message ?? "Erro inesperado. Recarregue a página."}
+              {import.meta.env.DEV
+                ? this.state.error?.message ?? "Erro inesperado. Recarregue a página."
+                : "Não foi possível exibir esta etapa. Recarregue a página e tente novamente."}
             </p>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}

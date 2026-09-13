@@ -59,6 +59,163 @@ def reset_db():
 USUARIO = {"email": "teste@example.com", "password": "Senha@123", "name": "Testador"}
 
 
+class TestWealth:
+    def test_conversational_goal_requires_confirmation_and_is_idempotent(self):
+        from uuid import uuid4
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        conv = client.post("/wealth/conversations",headers=headers).json()["id"]
+        for text in ["Criar um objetivo", "Viagem", "12000", "2", "0", "500"]:
+            result = client.post(f"/wealth/conversations/{conv}/messages",headers=headers,json={"text":text,"request_id":str(uuid4())})
+            assert result.status_code == 200
+        message = result.json()
+        assert client.get("/wealth/state",headers=headers).json()["goals"] == []
+        first = client.post(f"/wealth/messages/{message['id']}/confirm-goal",headers=headers)
+        second = client.post(f"/wealth/messages/{message['id']}/confirm-goal",headers=headers)
+        assert first.status_code == second.status_code == 200
+        assert first.json()["id"] == second.json()["id"]
+        assert client.get("/wealth/state",headers=headers).json()["profile"] is None
+        assert client.post("/wealth/recommendations",headers=headers).status_code == 409
+
+    def test_goal_budget_conflict_is_rejected(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        client.put("/wealth/profile",headers=headers,json=self.diagnosis())
+        goal = dict(name="Casa",target=100000,current=0,contribution=1500,years=10)
+        assert client.post("/wealth/goals",headers=headers,json=goal).status_code == 200
+        assert client.post("/wealth/goals",headers=headers,json=goal).status_code == 409
+
+    @pytest.mark.parametrize("change", ["cancelar", "novo objetivo", "profile"])
+    def test_outdated_conversational_proposals_cannot_be_confirmed(self, change):
+        from uuid import uuid4
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        conv = client.post("/wealth/conversations",headers=headers).json()["id"]
+        for text in ["Criar um objetivo", "Viagem", "12000", "2", "0", "500"]:
+            result = client.post(f"/wealth/conversations/{conv}/messages",headers=headers,json={"text":text,"request_id":str(uuid4())})
+        proposal = result.json()["id"]
+        if change == "profile":
+            client.put("/wealth/profile",headers=headers,json=self.diagnosis())
+        else:
+            client.post(f"/wealth/conversations/{conv}/messages",headers=headers,json={"text":change,"request_id":str(uuid4())})
+        assert client.post(f"/wealth/messages/{proposal}/confirm-goal",headers=headers).status_code == 409
+        assert client.get("/wealth/state",headers=headers).json()["goals"] == []
+
+
+    @staticmethod
+    def diagnosis():
+        return dict(age=35,income=10000,expenses=4000,assets=150000,reserve=24000,debt=0,debt_rate=0,
+                    contribution=2000,horizon=15,goal="crescimento",stability="estavel",experience="avancada",
+                    loss_tolerance="alta",liquidity_months=120)
+
+    def test_profile_persistence_and_recommendation_audit(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        assert client.post("/wealth/recommendations",headers=headers).status_code == 409
+        assert client.put("/wealth/profile",json=self.diagnosis(),headers=headers).status_code == 200
+        result = client.post("/wealth/recommendations",headers=headers)
+        assert result.status_code == 200
+        assert result.json()["profile_revision"] == 1
+        state = client.get("/wealth/state",headers=headers).json()
+        assert state["profile"]["expenses"] == 4000
+        assert state["recommendation"]["id"] == result.json()["id"]
+        assert len(client.get("/wealth/audit",headers=headers).json()) == 2
+        assert client.put("/wealth/profile",json={**self.diagnosis(),"expenses":5000},headers=headers).json()["revision"] == 2
+
+    def test_private_records_are_not_visible_to_other_user(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        goal = client.post("/wealth/goals",headers=headers,json=dict(name="Casa",target=100000,current=0,contribution=500,years=10)).json()
+        conv = client.post("/wealth/conversations",headers=headers).json()
+        client.post("/auth/register",json={"email":"other@example.com","password":"Senha@123"})
+        token = client.post("/auth/login",data={"username":"other@example.com","password":"Senha@123"}).json()["access_token"]
+        other = {"Authorization":f"Bearer {token}"}
+        assert client.get("/wealth/state",headers=other).json()["goals"] == []
+        assert client.get(f"/wealth/conversations/{conv['id']}/messages",headers=other).status_code == 404
+        assert client.get(f"/wealth/goals/{goal['id']}/history",headers=other).status_code == 404
+        assert client.get("/wealth/state").status_code == 401
+
+    def test_conversation_tools_and_idempotency(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        client.put("/wealth/profile",json=self.diagnosis(),headers=headers)
+        conv = client.post("/wealth/conversations",headers=headers).json()
+        path = f"/wealth/conversations/{conv['id']}/messages"
+        payload = {"text":"Como está minha reserva?","request_id":"one"}
+        first = client.post(path,headers=headers,json=payload).json()
+        assert first["agent"] == "orcamento"
+        assert client.post(path,headers=headers,json=payload).json()["id"] == first["id"]
+        assert len(client.get(path,headers=headers).json()) == 1
+
+    def test_import_requires_confirmation_and_deduplicates(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        body = dict(format="csv",content="date,description,amount,id\n2026-09-01,Compra,-20,abc",account="A",confirm=False)
+        assert client.post("/wealth/imports",json=body,headers=headers).json()["new_count"] == 1
+        assert client.get("/wealth/state",headers=headers).json()["transactions"] == []
+        body["confirm"] = True
+        assert client.post("/wealth/imports",json=body,headers=headers).json()["new_count"] == 1
+        assert client.post("/wealth/imports",json=body,headers=headers).json()["duplicates"] == 1
+        assert client.get("/wealth/state",headers=headers).json()["cashflow"]["2026-09"] == -20
+
+    def test_contribution_retries_do_not_duplicate_balance(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        goal = client.post("/wealth/goals",headers=headers,json=dict(name="Casa",target=100000,current=100,contribution=500,years=10)).json()
+        path = f"/wealth/goals/{goal['id']}/contributions"
+        body = dict(amount=500,date="2026-09-01",request_id="same")
+        for _ in range(2):
+            assert client.post(path,headers=headers,json=body).json()["current"] == 600
+
+    def test_mfa_requires_code_and_invalidates_old_sessions(self):
+        import pyotp
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        setup = client.post("/auth/mfa/setup",headers=headers,json={"password":"Senha@123"}).json()
+        code = pyotp.TOTP(setup["secret"]).now()
+        enabled = client.post("/auth/mfa/enable",headers=headers,json={"password":"Senha@123","code":code})
+        assert enabled.status_code == 200
+        assert client.get("/auth/me",headers=headers).status_code == 401
+        creds = {"username":USUARIO["email"],"password":"Senha@123"}
+        assert client.post("/auth/login",data=creds).status_code == 401
+        assert client.post("/auth/login",data={**creds,"otp":code}).status_code == 200
+        assert client.post("/auth/login",data={**creds,"otp":code}).status_code == 401
+
+    def test_draft_is_not_a_confirmed_profile(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        body = {"answers":self.diagnosis(),"step":8}
+        assert client.put("/wealth/draft",headers=headers,json=body).status_code == 200
+        assert client.get("/wealth/draft",headers=headers).json()["step"] == 8
+        assert client.get("/wealth/state",headers=headers).json()["profile"] is None
+        client.put("/wealth/profile",headers=headers,json=self.diagnosis())
+        assert client.get("/wealth/draft",headers=headers).json() is None
+
+    def test_password_reset_is_single_use_and_invalidates_session(self):
+        import hashlib
+        from datetime import datetime, timedelta, timezone
+        from app.models.wealth import WealthRecord
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        user_id = client.get("/auth/me",headers=headers).json()["id"]
+        raw = "test-recovery-token-12345678901234567890"
+        with TestingSessionLocal() as db:
+            db.add(WealthRecord(user_id=user_id,kind="reset",external_id=hashlib.sha256(raw.encode()).hexdigest(),data={"expires":(datetime.now(timezone.utc)+timedelta(minutes=10)).isoformat(),"used":False}))
+            db.commit()
+        body={"token":raw,"password":"SenhaNova@456"}
+        assert client.post("/auth/password/reset",json=body).status_code == 200
+        assert client.post("/auth/password/reset",json=body).status_code == 400
+        assert client.get("/auth/me",headers=headers).status_code == 401
+        assert client.post("/auth/login",data={"username":USUARIO["email"],"password":"SenhaNova@456"}).status_code == 200
+
+    def test_holdings_change_marks_recommendation_stale(self):
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        client.put("/wealth/profile",headers=headers,json=self.diagnosis())
+        client.post("/wealth/recommendations",headers=headers)
+        assert not client.get("/wealth/state",headers=headers).json()["recommendation_stale"]
+        client.post("/wealth/holdings",headers=headers,json={"name":"ETF","institution":"Banco","issuer":"Emissor","asset_class":"global","value":10000,"currency":"BRL"})
+        assert client.get("/wealth/state",headers=headers).json()["recommendation_stale"]
+
+    def test_catalog_search_uses_literal_wildcards(self):
+        from app.models.wealth import Product
+        headers = {"Authorization": f"Bearer {registrar_e_logar()}"}
+        with TestingSessionLocal() as db:
+            db.add_all([Product(id="a",data={"id":"a","name":"Fundo 100%"}),Product(id="b",data={"id":"b","name":"Outro"})])
+            db.commit()
+        found = client.get("/wealth/products",params={"q":"%"},headers=headers).json()
+        assert found["total"] == 1
+        assert found["products"][0]["id"] == "a"
+
+
 def registrar_e_logar() -> str:
     """Registra usuário e retorna token JWT."""
     client.post("/auth/register", json=USUARIO)

@@ -1,8 +1,46 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.wealth-workspace { max-width: 1180px; margin: auto; padding: 32px 24px; }
+.wealth-welcome { margin: 8px 0 28px; }
+.wealth-welcome h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -.035em; }
+.wealth-welcome p { color: #65758b; margin-top: 8px; }
+.wealth-tabs { display:flex; flex-wrap:wrap; gap:4px; border-bottom:1px solid #dae1ed; margin-bottom:24px; }
+.wealth-tabs button { padding:12px 14px; border-bottom:3px solid transparent; color:#65758b; }
+.wealth-tabs button[aria-current] { color:#132047; border-color:#3855ef; font-weight:600; }
+.wealth-panel { background:#fff; border:1px solid #dae1ed; border-radius:12px; padding:26px; min-width:0; }
+.wealth-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.wealth-section-heading>span { color:#65758b; font-size:13px; }
+.wealth-conversation-layout { display:grid; grid-template-columns:minmax(0, 1fr) 290px; gap:24px; align-items:start; }
+.wealth-context { padding:24px; background:#edf1f9; border-radius:12px; }
+.wealth-context h2 { font-size:18px; font-weight:600; margin-bottom:20px; }
+.wealth-context p { line-height:1.7; margin-bottom:18px; }
+.wealth-context dl { margin-bottom:24px; }
+.wealth-context dl>div { padding:12px 0; border-bottom:1px solid #dae1ed; }
+.wealth-context dt { font-size:13px; color:#65758b; }
+.wealth-context dd { font-size:18px; font-weight:600; margin-top:5px; font-variant-numeric:tabular-nums; }
+.wealth-messages { max-height:560px; overflow-y:auto; padding:24px 0; display:flex; flex-direction:column; gap:20px; }
+.wealth-reply { line-height:1.8; max-width:70ch; white-space:pre-wrap; }
+.wealth-user-message { margin-left:auto; max-width:85%; padding:12px 16px; background:#edf1f9; border-radius:12px 12px 2px 12px; overflow-wrap:anywhere; }
+.wealth-notice { border-left:3px solid #3855ef; background:#edf1f9; padding:14px 18px; margin-bottom:20px; border-radius:4px; }
+.wealth-select { display:block; width:100%; border:1px solid #dae1ed; padding:9px 12px; border-radius:8px; margin-top:4px; background:white; color:#132047; }
+.wealth-choice { border:1px solid #dae1ed; padding:16px; text-align:left; border-radius:8px; }
+.wealth-choice:hover, .wealth-choice[aria-pressed=true] { border-color:#3855ef; background:#f4f6ff; }
+.wealth-review>div { display:flex; justify-content:space-between; gap:20px; padding:12px 0; border-bottom:1px solid #e7ebf3; }
+.wealth-review dt { color:#65758b; max-width:65%; }
+.wealth-review dd { text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.wealth-product { margin-top:14px; padding:18px; background:#f8f9fc; border-radius:8px; }
+.wealth-product summary { display:flex; justify-content:space-between; align-items:center; gap:20px; cursor:pointer; }
+.wealth-product summary small { display:block; margin-top:5px; color:#65758b; }
+.wealth-product summary>span:last-child { font-size:13px; color:#3855ef; }
+.wealth-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+.wealth-table th,.wealth-table td { text-align:left; padding:12px 10px; border-bottom:1px solid #e7ebf3; }
+.wealth-table th { color:#65758b; font-weight:500; }
+.wealth-workspace input { margin-top:5px; }
+.wealth-workspace button:focus-visible,.wealth-workspace summary:focus-visible { outline:2px solid #3855ef; outline-offset:3px; }
+@media (max-width:760px) { .wealth-workspace { padding:20px 14px; } .wealth-conversation-layout { grid-template-columns:1fr; } .wealth-panel { padding:20px; } .wealth-tabs button { padding:10px; font-size:13px; } .wealth-product summary { align-items:start; flex-direction:column; gap:8px; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
@@ -54,7 +92,7 @@ All colors MUST be HSL.
 
     --sidebar: 0 0% 98%;
 
-    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
 
     --font-serif: 'Merriweather', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
@@ -147,13 +185,20 @@ All colors MUST be HSL.
 @layer components {
   .prisma-mark,
   .prisma-orb {
-    @apply flex shrink-0 items-center justify-center text-white;
-    background: linear-gradient(145deg, #315cf5 8%, #7357d9 58%, #42bfd3 115%);
-    box-shadow: 0 8px 24px hsl(229 82% 57% / 0.2);
+    @apply flex shrink-0 items-center justify-center bg-[#172554];
   }
 
-  .prisma-mark { @apply h-10 w-10 rounded-[14px]; }
-  .prisma-orb { @apply h-8 w-8 rounded-full; }
+  .prisma-mark { @apply h-10 w-10 rounded-[10px]; }
+  .prisma-orb { @apply h-8 w-8 rounded-[8px]; }
+  .prisma-mark span,
+  .prisma-orb span {
+    display: block;
+    width: 44%;
+    height: 44%;
+    border: 1.5px solid white;
+    transform: rotate(45deg);
+  }
+  .prisma-orb span { border-color: #8bd4dd; }
 
   .prisma-intro {
     @apply mx-auto max-w-3xl pb-2 pt-5 text-left;
@@ -165,8 +210,8 @@ All colors MUST be HSL.
 
   .concierge-shell {
     @apply overflow-hidden border bg-white;
-    border-radius: 1.5rem;
-    box-shadow: 0 28px 80px hsl(225 54% 16% / 0.1);
+    border-radius: 0.75rem;
+    box-shadow: 0 16px 50px hsl(225 54% 16% / 0.07);
   }
 
   .concierge-progress { @apply h-1 bg-secondary; }
@@ -175,51 +220,68 @@ All colors MUST be HSL.
     background: linear-gradient(90deg, #315cf5, #7357d9, #42bfd3);
   }
 
-  .concierge-layout { @apply grid min-h-[560px] lg:grid-cols-[minmax(0,1fr)_320px]; }
+  .concierge-layout { @apply grid min-h-[560px] lg:grid-cols-[minmax(0,1fr)_340px]; }
   .conversation-pane { @apply flex min-w-0 flex-col p-6 sm:p-10; }
   .conversation-heading { @apply flex items-center gap-3 border-b pb-5; }
   .conversation-history { @apply flex max-h-28 flex-col items-end gap-2 overflow-hidden py-4; }
-  .history-row span { @apply inline-block rounded-2xl rounded-br-sm bg-secondary px-4 py-2 text-sm text-secondary-foreground; }
+  .history-row span { @apply inline-block rounded-lg rounded-br-sm bg-secondary px-4 py-2 text-sm text-secondary-foreground; }
   .conversation-current { @apply my-auto max-w-2xl py-6; }
   .conversation-current h2 { @apply text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl; }
   .conversation-current > p { @apply mt-3 max-w-xl leading-7 text-muted-foreground; }
 
   .objective-grid { @apply mt-8 grid gap-3 sm:grid-cols-2; }
   .objective-grid button {
-    @apply relative flex min-h-28 flex-col items-start rounded-2xl border bg-white p-5 text-left outline-none transition-colors hover:border-primary/50 hover:bg-secondary/40 focus-visible:ring-2 focus-visible:ring-ring;
+    @apply relative flex min-h-28 flex-col items-start rounded-lg border bg-white p-5 text-left outline-none transition-colors hover:border-primary/50 hover:bg-secondary/40 focus-visible:ring-2 focus-visible:ring-ring;
   }
   .objective-grid button strong { @apply pr-6 text-sm font-semibold; }
   .objective-grid button span { @apply mt-1 pr-5 text-xs leading-5 text-muted-foreground; }
   .objective-grid button svg { @apply absolute right-4 top-5 text-primary; }
 
-  .answer-composer { @apply mt-8 flex max-w-xl items-center gap-3 rounded-2xl border bg-secondary/40 p-2 pl-4; }
+  .answer-composer { @apply mt-8 flex max-w-xl items-center gap-3 rounded-lg border bg-secondary/40 p-2 pl-4; }
   .answer-composer > span { @apply shrink-0 text-sm font-semibold text-muted-foreground; }
   .answer-composer input { @apply h-12 border-0 bg-transparent text-xl font-semibold shadow-none focus-visible:ring-0; }
-  .answer-composer button { @apply h-12 w-12 shrink-0 rounded-xl; }
+  .answer-composer button { @apply h-12 w-12 shrink-0 rounded-md; }
 
   .back-button { @apply mt-7 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring; }
   .review-kicker { @apply mb-4 flex items-center gap-2 text-sm font-semibold text-primary; }
-  .review-summary { @apply my-7 grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-3; }
+  .review-summary { @apply my-7 grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-3; }
   .review-summary div { @apply flex flex-col bg-white p-4; }
   .review-summary span { @apply text-xs text-muted-foreground; }
   .review-summary strong { @apply mt-1 text-sm font-semibold; }
-  .prisma-cta { @apply gap-2 rounded-xl; }
+  .prisma-cta { @apply gap-2 rounded-md; }
 
-  .context-pane { @apply hidden border-l bg-[#172554] p-8 text-white lg:flex lg:flex-col; }
+  .context-pane { @apply hidden border-l bg-[#f1f4f8] p-10 text-foreground lg:flex lg:flex-col; }
+  .context-heading { @apply flex items-baseline justify-between gap-4 border-b border-[#d9dfe8] pb-5; }
   .context-title { @apply text-sm font-semibold; }
-  .context-copy { @apply mt-2 text-sm leading-6 text-blue-100/65; }
-  .context-pane dl { @apply mt-8 space-y-1; }
-  .context-pane dl div { @apply border-b border bg-transparent py-4; border-color: rgb(255 255 255 / 0.1); }
-  .context-pane dt { @apply text-xs text-blue-100/55; }
-  .context-pane dd { @apply mt-1 text-sm font-medium; }
-  .privacy-note { @apply mt-auto border-t pt-5 text-xs leading-5 text-blue-100/55; border-color: rgb(255 255 255 / 0.1); }
+  .context-heading > span { @apply text-xs tabular-nums text-muted-foreground; }
+  .context-goal { @apply border-b border-[#d9dfe8] py-8; }
+  .context-goal span { @apply block text-xs text-muted-foreground; }
+  .context-goal strong { @apply mt-2 block text-xl font-semibold leading-7 tracking-[-0.02em]; }
+  .context-pane dl { @apply mt-3; }
+  .context-pane dl div { @apply grid grid-cols-[1fr_auto] items-baseline gap-5 border-b border-[#d9dfe8] py-4; }
+  .context-pane dt { @apply text-xs text-muted-foreground; }
+  .context-pane dd { @apply text-right text-sm font-semibold; }
+  .privacy-note { @apply mt-auto border-t border-[#d9dfe8] pt-5 text-xs leading-5 text-muted-foreground; }
 
-  .login-prisma {
-    background:
-      radial-gradient(circle at 18% 20%, hsl(229 82% 57% / 0.12), transparent 30%),
-      radial-gradient(circle at 85% 78%, hsl(188 61% 54% / 0.1), transparent 28%),
-      hsl(var(--background));
-  }
+  .login-prisma { @apply grid bg-white lg:grid-cols-[minmax(360px,0.85fr)_1.15fr]; }
+  .login-introduction { @apply flex min-h-[360px] flex-col justify-between bg-[#172554] p-8 text-white sm:p-12 lg:min-h-screen lg:p-16; }
+  .login-brand { @apply flex items-center gap-3 text-lg; }
+  .login-brand .prisma-mark { @apply border border-white/20 bg-white; }
+  .login-brand .prisma-mark span { border-color: #172554; }
+  .login-introduction h1 { @apply max-w-xl text-3xl font-medium leading-[1.14] tracking-[-0.04em] sm:text-5xl; }
+  .login-introduction h1 + p { @apply mt-6 max-w-lg text-base leading-7 text-blue-100/70; }
+  .login-disclaimer { @apply text-xs text-blue-100/50; }
+  .login-access { @apply flex min-h-[620px] flex-col items-center justify-center gap-5 bg-[#f7f8fb] p-5 sm:p-10; }
+  .login-card { @apply rounded-lg border bg-white shadow-none; }
+  .login-section-label { @apply mb-2 text-xs font-semibold text-muted-foreground; }
+  .demo-access { @apply w-full max-w-md border-t border-[#cfd5e1] pt-5 text-sm; }
+  .demo-access > div > p { @apply font-semibold text-foreground; }
+  .demo-access > div > span { @apply mt-1 block text-xs text-muted-foreground; }
+  .demo-access dl { @apply mt-4 grid grid-cols-2 gap-3; }
+  .demo-access dl div { @apply border-l-2 border-[#172554] pl-3; }
+  .demo-access dt { @apply text-xs text-muted-foreground; }
+  .demo-access dd { @apply mt-0.5 font-medium text-foreground; }
+  .demo-access button { @apply mt-4 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,12 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Form
+import pyotp
+import time
+from sqlalchemy import or_
+from app.models.wealth import WealthRecord
+from app.services.account_security import security_record, version, cipher
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -30,9 +35,10 @@ def login_for_access_token(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db),
+    otp: str = Form(default=""),
 ):
     user = auth_service.get_user(db, email=form_data.username)
-    if not user or not auth_service.verify_password(
+    if not user or not user.is_active or not auth_service.verify_password(
         form_data.password, user.hashed_password
     ):
         raise HTTPException(
@@ -40,11 +46,24 @@ def login_for_access_token(
             detail="E-mail ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    sec = security_record(db, user)
+    if sec.data.get("mfa"):
+        if not pyotp.TOTP(cipher().decrypt(sec.data["secret"].encode()).decode()).verify(otp):
+            raise HTTPException(401, "Informe o código do aplicativo autenticador.")
+        step = int(time.time() // 30)
+        consumed = db.query(WealthRecord).filter(
+            WealthRecord.id == sec.id,
+            or_(WealthRecord.data["last_otp_step"].as_integer().is_(None), WealthRecord.data["last_otp_step"].as_integer() < step),
+        ).update({"data": {**sec.data, "last_otp_step": step}}, synchronize_session=False)
+        if not consumed:
+            raise HTTPException(401, "Código já utilizado. Aguarde o próximo código do autenticador.")
+    db.commit()
+    claims = {"sub": user.email, "auth_version": sec.data.get("version", 0)}
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = auth_service.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data=claims, expires_delta=access_token_expires
     )
-    refresh_token = auth_service.create_refresh_token(data={"sub": user.email})
+    refresh_token = auth_service.create_refresh_token(data=claims)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
@@ -72,12 +91,14 @@ def refresh_access_token(body: RefreshRequest, db: Session = Depends(get_db)):
             detail="Usuário não encontrado ou inativo",
         )
     # Rotação: revoga o token usado antes de emitir o novo par
+    if token_data.auth_version != version(db, user):
+        raise invalid
     auth_service.revoke_token(db, token_data.jti, token_data.exp)
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     new_access_token = auth_service.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": user.email, "auth_version": token_data.auth_version}, expires_delta=access_token_expires
     )
-    new_refresh_token = auth_service.create_refresh_token(data={"sub": user.email})
+    new_refresh_token = auth_service.create_refresh_token(data={"sub": user.email, "auth_version": token_data.auth_version})
     return {"access_token": new_access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
 
 

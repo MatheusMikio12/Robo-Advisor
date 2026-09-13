@@ -1,0 +1,37 @@
+# Perfil independente: docker compose -f docker-compose.postgres.yml up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: prisma
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prisma -d prisma"]
+      interval: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    environment:
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY}
+      DATABASE_URL: postgresql+psycopg://prisma:${POSTGRES_PASSWORD}@db:5432/prisma
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+volumes:
+  postgres_data:

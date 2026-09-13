@@ -1,0 +1,51 @@
+import { test, expect } from "@playwright/test";
+
+test("jornada completa, persistência e cenários no desktop e no celular", async ({page,request}) => {
+  page.on("pageerror", error => console.error("Browser error:",error.message));
+  page.on("requestfailed", request => console.error("Request failed:",request.url(),request.failure()?.errorText));
+  const email=`qa-${Date.now()}@example.com`;
+  const password="TestePrisma@2026";
+  const response=await request.post("http://127.0.0.1:8002/auth/register",{data:{email,password}});
+  expect(response.ok()).toBeTruthy();
+  await page.goto("/login");
+  await page.getByLabel("E-mail",{exact:true}).fill(email);
+  await page.getByLabel("Senha",{exact:true}).fill(password);
+  await page.getByRole("button",{name:"Entrar",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Seu dinheiro, com contexto."})).toBeVisible();
+  await page.getByRole("button",{name:"Começar diagnóstico"}).click();
+  await page.getByRole("button",{name:"Construir patrimônio",exact:true}).click();
+  await page.getByLabel("Qual é a sua idade?",{exact:true}).fill("35");
+  await page.getByRole("button",{name:"Continuar",exact:true}).click();
+  await expect(page.getByLabel("Quanto você recebe por mês?",{exact:true})).toBeVisible();
+  await page.reload();
+  await page.getByRole("button",{name:"Diagnóstico",exact:true}).click();
+  await expect(page.getByLabel("Quanto você recebe por mês?",{exact:true})).toBeVisible();
+  for (const [label,value] of [["Quanto você recebe por mês?","10000"],["Quanto custa sua rotina mensal?","4000"],["Quanto você tem em recursos financeiros?","150000"],["Desse valor, quanto está reservado para emergências?","24000"],["Qual é o saldo total das suas dívidas?","0"],["Quanto pretende investir por mês?","2000"],["Em quantos anos pretende usar esse dinheiro?","15"],["Em quantos meses pode precisar resgatar?","120"]]) {
+    await page.getByLabel(label,{exact:true}).fill(value);
+    await page.getByRole("button",{name:"Continuar",exact:true}).click();
+  }
+  for (const name of ["Estável","Conheço riscos e produtos","Manteria o plano, mesmo com quedas fortes","Real"]) await page.getByRole("button",{name,exact:true}).click();
+  await page.getByRole("button",{name:"Salvar diagnóstico",exact:true}).click();
+  await page.getByRole("button",{name:"Gerar minha carteira",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Uma função para cada parte do seu dinheiro"})).toBeVisible();
+  await expect(page.getByText("Arrojado",{exact:false}).first()).toBeVisible();
+  await page.getByRole("button",{name:"Conversa",exact:true}).click();
+  await page.getByRole("button",{name:"Como está minha reserva?",exact:true}).click();
+  await expect(page.getByText("Sua sobra mensal informada é",{exact:false})).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Sua sobra mensal informada é",{exact:false})).toBeVisible();
+  await page.getByRole("button",{name:"Meu plano",exact:true}).click();
+  await page.getByText("Adicionar objetivo",{exact:true}).click();
+  await page.getByLabel("Nome",{exact:true}).fill("Casa teste");
+  await page.getByRole("button",{name:"Salvar meta",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Casa teste"})).toBeVisible();
+  await page.getByRole("button",{name:"Calcular cenário",exact:true}).click();
+  await expect(page.getByText("Chance estimada de atingir a meta:",{exact:false})).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole("button",{name:"Conversa",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Seu contexto",exact:true})).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await page.screenshot({path:"test-results/prisma-mobile.png",fullPage:true});
+  await page.setViewportSize({width:1366,height:900});
+  await page.screenshot({path:"test-results/prisma-desktop.png",fullPage:true});
+});

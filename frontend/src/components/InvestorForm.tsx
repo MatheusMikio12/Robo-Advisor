@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InvestorFormData } from "@/types/roboAdvisor";
@@ -42,7 +42,7 @@ const InvestorForm = ({ onSubmit, isLoading }: InvestorFormProps) => {
   const goBack = () => setStep((current) => Math.max(current - 1, 0));
 
   const chooseObjective = (objective: InvestorFormData["objetivo"]) => {
-    setFormData((current) => ({ ...current, objetivo }));
+    setFormData((current) => ({ ...current, objetivo: objective }));
     window.setTimeout(advance, 120);
   };
 
@@ -62,7 +62,7 @@ const InvestorForm = ({ onSubmit, isLoading }: InvestorFormProps) => {
       <div className="concierge-layout">
         <div className="conversation-pane">
           <div className="conversation-heading">
-            <div className="prisma-orb"><Sparkles className="h-4 w-4" /></div>
+            <div className="prisma-orb" aria-hidden="true"><span /></div>
             <div><p className="text-sm font-semibold text-foreground">Prisma</p><p className="text-xs text-muted-foreground">Seu concierge financeiro</p></div>
           </div>
           <div className="conversation-history" aria-live="polite">
@@ -102,7 +102,7 @@ const InvestorForm = ({ onSubmit, isLoading }: InvestorFormProps) => {
                 <div><span>Aporte</span><strong>{formatCurrency(formData.aporte_mensal)}/mês</strong></div>
               </div>
               <Button type="submit" size="lg" className="prisma-cta" disabled={isLoading}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {isLoading ? "Analisando seu cenário..." : "Criar meu primeiro plano"}
               </Button>
             </>}
@@ -110,15 +110,20 @@ const InvestorForm = ({ onSubmit, isLoading }: InvestorFormProps) => {
           </form>
         </div>
         <aside className="context-pane">
-          <p className="context-title">O que estou entendendo</p>
-          <p className="context-copy">Suas respostas ficam organizadas aqui enquanto conversamos.</p>
+          <div className="context-heading">
+            <p className="context-title">Seu contexto</p>
+            <span>{step} de {steps.length} respostas</span>
+          </div>
+          <div className="context-goal">
+            <span>Objetivo principal</span>
+            <strong>{step > 0 ? answerLabel("objetivo", formData) : "Vamos descobrir juntos"}</strong>
+          </div>
           <dl>
-            <div><dt>Objetivo</dt><dd>{step > 0 ? answerLabel("objetivo", formData) : "Vamos descobrir"}</dd></div>
             <div><dt>Patrimônio</dt><dd>{step > 3 ? formatCurrency(formData.patrimonio_atual) : "Ainda não informado"}</dd></div>
             <div><dt>Aporte mensal</dt><dd>{step > 4 ? formatCurrency(formData.aporte_mensal) : "Ainda não informado"}</dd></div>
             <div><dt>Prazo</dt><dd>{step > 5 ? `${formData.prazo_anos} anos` : "Ainda não informado"}</dd></div>
           </dl>
-          <p className="privacy-note">Você poderá revisar tudo antes de gerar a análise.</p>
+          <p className="privacy-note">Você revisa as informações antes de criar o plano.</p>
         </aside>
       </div>
     </section>

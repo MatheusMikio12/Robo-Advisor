@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { API_URL } from "@/config";
 
@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (accessToken: string, refreshToken: string) => void;
+    login: (accessToken: string, refreshToken: string) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
 }
@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(localStorage.getItem(STORAGE_KEYS.access));
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+    const verifiedToken = useRef<string | null>(null);
 
     const logout = useCallback(() => {
         // Revoga o refresh token no servidor (best-effort — não bloqueia o logout local)
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(STORAGE_KEYS.refresh);
         setToken(null);
         setUser(null);
+        verifiedToken.current = null;
     }, []);
 
     const tryRefresh = useCallback(async (): Promise<string | null> => {
@@ -110,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (token) {
+            if (verifiedToken.current === token) return;
             localStorage.setItem(STORAGE_KEYS.access, token);
             fetchMe(token);
         } else {
@@ -118,10 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [token, fetchMe, logout]);
 
-    const login = (accessToken: string, refreshToken: string) => {
-        localStorage.setItem(STORAGE_KEYS.access, accessToken);
-        localStorage.setItem(STORAGE_KEYS.refresh, refreshToken);
-        setToken(accessToken);
+    const login = async (accessToken: string, refreshToken: string) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/auth/me`, {headers:{Authorization:`Bearer ${accessToken}`}});
+            if(!response.ok) throw new Error("Não foi possível validar a sessão.");
+            const authenticatedUser = await response.json();
+            verifiedToken.current = accessToken;
+            localStorage.setItem(STORAGE_KEYS.access, accessToken);
+            localStorage.setItem(STORAGE_KEYS.refresh, refreshToken);
+            setUser(authenticatedUser);
+            setToken(accessToken);
+        } finally {setIsLoading(false);}
     };
 
     return (

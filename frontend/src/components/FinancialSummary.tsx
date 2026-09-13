@@ -62,7 +62,7 @@ const FinancialSummary = ({ resumo }: FinancialSummaryProps) => {
                 {metric.icon}
               </div>
               <p className="text-sm text-muted-foreground">{metric.label}</p>
-              <p className={`mt-1 text-lg font-bold ${metric.highlight ? "text-accent-foreground" : "text-foreground"}`}>
+              <p className="mt-1 text-lg font-bold text-foreground">
                 {metric.value}
               </p>
             </div>

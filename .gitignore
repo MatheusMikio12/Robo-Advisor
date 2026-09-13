@@ -13,6 +13,11 @@ frontend/.env
 .env
 __pycache__/
 *.pyc
+backend/.venv/
+.pytest_cache/
+*.log
+frontend/test-results/
+frontend/playwright-report/
 
 # Arquivos órfãos
 package-lock.json

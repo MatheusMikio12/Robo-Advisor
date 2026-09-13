@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { API_URL } from "@/config";
 
 /** Extrai mensagem legível do corpo de erro da API (string simples ou array de validação 422). */
@@ -19,6 +19,8 @@ function extractErrorMessage(body: unknown, fallback: string): string {
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [otp, setOtp] = useState("");
+    const [resetToken, setResetToken] = useState(new URLSearchParams(window.location.search).get("reset") ?? "");
     const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
@@ -31,6 +33,12 @@ export default function Login() {
         const trimmedEmail = email.trim();
 
         try {
+            if (resetToken) {
+                const response = await fetch(`${API_URL}/auth/password/reset`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({token:resetToken,password})});
+                const body = await response.json();
+                if(!response.ok) {toast({title:"Não foi possível redefinir",description:extractErrorMessage(body,"Link inválido."),variant:"destructive"});return;}
+                setResetToken("");setPassword("");navigate("/login",{replace:true});toast({title:"Senha atualizada",description:"Entre com sua nova senha."});return;
+            }
             if (isRegistering) {
                 const response = await fetch(`${API_URL}/auth/register`, {
                     method: "POST",
@@ -49,6 +57,7 @@ export default function Login() {
                 const formData = new URLSearchParams();
                 formData.append("username", trimmedEmail);
                 formData.append("password", password);
+                formData.append("otp", otp);
 
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: "POST",
@@ -58,9 +67,9 @@ export default function Login() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    login(data.access_token, data.refresh_token);
+                    await login(data.access_token, data.refresh_token);
                     toast({ title: "Login realizado com sucesso", description: "Bem-vindo de volta!" });
-                    navigate("/");
+                    navigate("/", { replace: true });
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     toast({ title: "Erro no login", description: extractErrorMessage(errorData, "Credenciais inválidas."), variant: "destructive" });
@@ -75,15 +84,23 @@ export default function Login() {
     };
 
     return (
-        <div className="login-prisma min-h-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-md shadow-lg border-primary/20 bg-card/50 backdrop-blur-xl">
+        <div className="login-prisma min-h-screen">
+            <section className="login-introduction">
+                <div className="login-brand"><div className="prisma-mark" aria-hidden="true"><span /></div><strong>Prisma</strong></div>
+                <div>
+                    <h1>Seu dinheiro merece contexto, não respostas prontas.</h1>
+                    <p>Organize seus objetivos, entenda os caminhos possíveis e tome decisões com mais clareza.</p>
+                </div>
+                <p className="login-disclaimer">Planejamento educacional. O Prisma não movimenta seu dinheiro.</p>
+            </section>
+            <main className="login-access">
+            <Card className="login-card w-full max-w-md">
                 <CardHeader className="space-y-1">
-                    <div className="prisma-mark mx-auto mb-3"><Sparkles className="h-5 w-5" /></div>
-                    <p className="text-center text-sm font-semibold text-primary">Prisma</p>
-                    <CardTitle className="text-2xl font-bold text-center tracking-tight text-primary">
-                        {isRegistering ? "Vamos começar?" : "Que bom ter você de volta"}
+                    <p className="login-section-label">Acesso ao Prisma</p>
+                    <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
+                        {resetToken ? "Redefina sua senha" : isRegistering ? "Vamos começar?" : "Que bom ter você de volta"}
                     </CardTitle>
-                    <CardDescription className="text-center">
+                    <CardDescription>
                         {isRegistering
                             ? "Crie sua conta para construir seu primeiro plano em uma conversa."
                             : "Entre para continuar sua jornada financeira."}
@@ -101,11 +118,12 @@ export default function Login() {
                                 placeholder="seu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                required
+                                required={!resetToken}
                                 autoComplete="email"
                                 className="bg-background/50"
                             />
                         </div>
+                        {!isRegistering && !resetToken && <div className="space-y-2"><label htmlFor="otp" className="text-sm">Código do autenticador (se ativado)</label><Input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={e => setOtp(e.target.value)} /></div>}
                         <div className="space-y-2">
                             <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 Senha
@@ -128,17 +146,18 @@ export default function Login() {
                         </div>
                         <Button
                             type="submit"
-                            className="w-full font-bold shadow-md hover:shadow-lg transition-all"
+                            className="w-full font-semibold"
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : null}
-                            {isRegistering ? "Registrar" : "Entrar"}
+                            {resetToken ? "Salvar nova senha" : isRegistering ? "Registrar" : "Entrar"}
                         </Button>
                     </form>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4 border-t border-primary/10 pt-4 mt-2">
+                    {!isRegistering && !resetToken && <button type="button" className="text-primary text-sm" disabled={isLoading} onClick={async () => {if(!email.trim()) {toast({title:"Informe seu e-mail primeiro"});return;} setIsLoading(true);try {const response = await fetch(`${API_URL}/auth/password/forgot`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.trim()})});const body = await response.json();toast({title:response.ok ? "Recuperação de acesso" : "Recuperação indisponível",description:extractErrorMessage(body,"Tente novamente."),variant:response.ok ? "default" : "destructive"});} catch {toast({title:"Erro de conexão",variant:"destructive"});} finally {setIsLoading(false);}}}>Esqueci minha senha</button>}
                     <p className="text-sm text-center text-muted-foreground">
                         {isRegistering ? "Já possui uma conta?" : "Ainda não tem cadastro?"}{" "}
                         <button
@@ -152,6 +171,22 @@ export default function Login() {
                     </p>
                 </CardFooter>
             </Card>
+            {import.meta.env.DEV && !isRegistering && (
+                <aside className="demo-access" aria-label="Credenciais de desenvolvimento">
+                    <div>
+                        <p>Acesso de desenvolvimento</p>
+                        <span>Disponível apenas enquanto o app roda localmente.</span>
+                    </div>
+                    <dl>
+                        <div><dt>E-mail</dt><dd>admin@admin.com</dd></div>
+                        <div><dt>Senha</dt><dd>Admin@123</dd></div>
+                    </dl>
+                    <button type="button" onClick={() => { setEmail("admin@admin.com"); setPassword("Admin@123"); }}>
+                        Preencher acesso
+                    </button>
+                </aside>
+            )}
+            </main>
         </div>
     );
 }

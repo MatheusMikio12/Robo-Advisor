@@ -68,12 +68,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_access_token(token: str) -> TokenData | None:
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
-        if payload.get("type") == "refresh":
+        if payload.get("type") not in (None, "access"):
             return None  # recusa usar refresh token como access token
         email: str = payload.get("sub")
         if email is None:
             return None
-        return TokenData(email=email)
+        return TokenData(email=email, auth_version=payload.get("auth_version", 0))
     except jwt.PyJWTError:
         return None
 
@@ -94,7 +94,7 @@ def decode_refresh_token(token: str) -> TokenData | None:
         email: str = payload.get("sub")
         if email is None:
             return None
-        return TokenData(email=email, jti=payload.get("jti"), exp=payload.get("exp"))
+        return TokenData(email=email, jti=payload.get("jti"), exp=payload.get("exp"), auth_version=payload.get("auth_version", 0))
     except jwt.PyJWTError:
         return None
 

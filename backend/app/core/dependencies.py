@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.auth.models.user import User
 from app.auth.services import auth_service
 from app.database import get_db
+from app.services.account_security import version
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -33,6 +34,8 @@ def get_current_user(
         raise credentials_exception
     user = auth_service.get_user(db, email=token_data.email)
     if user is None:
+        raise credentials_exception
+    if token_data.auth_version != version(db, user):
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(
